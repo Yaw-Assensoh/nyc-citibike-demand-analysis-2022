@@ -1,0 +1,2 @@
+maps/*.html filter=lfs diff=lfs merge=lfs -text
+notebooks/*.html filter=lfs diff=lfs merge=lfs -text
