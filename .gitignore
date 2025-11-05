@@ -231,11 +231,11 @@ data/processed/*.csv
 checkpoints
 
 
-data
-pyarray-env
-dahshboard
-data
+data/checkpoints
+notebooks/checkpoints
+notebooks/data/checkpoints
 
-*. 
+pyarrow-env
+
 
 
