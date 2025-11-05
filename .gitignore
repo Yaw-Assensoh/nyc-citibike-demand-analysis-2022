@@ -246,3 +246,6 @@ notebooks/nyc_bike_trips_aggregated_light.html
 notebooks/nyc_bike_trips_aggregated.html
 notebooks/nyc_bike_trips_aggregated_light.html
 notebooks/nyc_bike_trips_aggregated_compressed.html.gz
+notebooks/nyc_bike_trips_aggregated.html
+notebooks/nyc_bike_trips_aggregated_light.html
+notebooks/nyc_bike_trips_aggregated_compressed.html.gz
