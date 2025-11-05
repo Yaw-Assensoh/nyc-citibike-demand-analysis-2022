@@ -236,6 +236,8 @@ notebooks/checkpoints
 notebooks/data/checkpoints
 
 pyarrow-env
+notebooks/*.html
+.html
 
 
 
