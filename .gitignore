@@ -236,8 +236,8 @@ notebooks/checkpoints
 notebooks/data/checkpoints
 
 pyarrow-env
-notebooks/*.html
-.html
+notebooks/nyc_bike_trips_aggregated.html
+notebooks/nyc_bike_trips_aggregated.ipynb
 
 
 
