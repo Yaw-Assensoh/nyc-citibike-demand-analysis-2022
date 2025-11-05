@@ -217,3 +217,20 @@ data/processed/
 .DS_Store
 data/.DS_Store
 notebooks/.DS_Store
+
+# checkpoints
+checkpoints
+
+
+# text files
+*.txt
+
+#data files
+*.csv
+data/*.csv
+data/raw/*.csv
+data/processed/*.csv
+
+pyarrow-env
+dashboard   
+data
