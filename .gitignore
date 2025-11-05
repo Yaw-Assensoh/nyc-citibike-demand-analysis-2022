@@ -213,9 +213,24 @@ __marimo__/
 
 # Data directories (large files)
 data/raw/
+data/processed/
 .DS_Store
 data/.DS_Store
 notebooks/.DS_Store
 
-text_files/
+# text files
+*.txt 
+
+# data files
+*.csv
+data/*.csv
+data/raw/*.csv
+data/processed/*.csv
+
+
+data
+pyarray-env
+dahshboard
+data
+checkpoints
 *
