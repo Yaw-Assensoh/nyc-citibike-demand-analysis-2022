@@ -239,5 +239,7 @@ pyarrow-env
 notebooks/nyc_bike_trips_aggregated.html
 notebooks/nyc_bike_trips_aggregated.ipynb
 
+notebooks/nyc_bike_trips_aggregated.html
+notebooks/nyc_bike_trips_aggregated_compressed.html.gz
 
 
