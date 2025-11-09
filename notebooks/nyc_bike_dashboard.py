@@ -37,35 +37,58 @@ and support strategic expansion decisions for NYC Citi Bike.
 
 st.sidebar.header("Data Overview")
 
-# Load data with caching - EXACT PATHS FROM YOUR NOTEBOOK
+# Load data with caching - OPTIMIZED FOR SPEED
 @st.cache_data
 def load_dashboard_data():
-    # Load the main dataset first
-    DATA_PATH = "../data/processed/nyc_citibike_2022_processed.csv"
-    df = pd.read_csv(DATA_PATH, low_memory=False)
+    # First try to load pre-processed CSV files (much faster)
+    try:
+        top_stations = pd.read_csv('top_20_stations_full.csv')
+        daily_data = pd.read_csv('daily_aggregated_data_full.csv')
+        daily_data['date'] = pd.to_datetime(daily_data['date'])
+        return top_stations, daily_data
+    except FileNotFoundError:
+        pass
     
-    # Create trip count column and prepare data exactly like in notebook
-    df['trip_count'] = 1
-    df['started_at'] = pd.to_datetime(df['started_at'])
-    df['date'] = df['started_at'].dt.date
+    # If pre-processed files don't exist, load and process the main dataset
+    st.warning("Loading and processing main dataset... This may take a few minutes.")
     
-    # Create top stations data (from cell 77)
+    # Load only necessary columns to save memory and time
+    cols_to_use = ['start_station_name', 'started_at']
+    if 'temperature' in pd.read_csv('../data/processed/nyc_citibike_2022_processed.csv', nrows=1).columns:
+        cols_to_use.append('temperature')
+    
+    # Load data in chunks to avoid memory issues
+    chunk_size = 1000000
+    chunks = []
+    
+    for chunk in pd.read_csv('../data/processed/nyc_citibike_2022_processed.csv', 
+                           usecols=cols_to_use, 
+                           chunksize=chunk_size,
+                           low_memory=False):
+        chunk['started_at'] = pd.to_datetime(chunk['started_at'])
+        chunk['date'] = chunk['started_at'].dt.date
+        chunk['trip_count'] = 1
+        chunks.append(chunk)
+    
+    df = pd.concat(chunks, ignore_index=True)
+    
+    # Create top stations data
     station_trips = df.groupby('start_station_name', as_index=False)['trip_count'].count()
     top_stations = station_trips.nlargest(20, 'trip_count')
     
-    # Create daily aggregated data (from cells 11 and 66)
+    # Create daily aggregated data
     daily_aggregated = df.groupby('date').agg({
         'trip_count': 'sum'
     }).reset_index()
     daily_aggregated.columns = ['date', 'daily_trips']
     daily_aggregated['date'] = pd.to_datetime(daily_aggregated['date'])
     
-    # Add temperature data (from cell 11)
+    # Add temperature data if available
     if 'temperature' in df.columns:
         temp_data = df.groupby('date')['temperature'].mean().reset_index()
         daily_aggregated = daily_aggregated.merge(temp_data, on='date')
     else:
-        # Create realistic temperature data like in notebook
+        # Create realistic temperature data
         np.random.seed(42)
         daily_aggregated['month'] = daily_aggregated['date'].dt.month
         monthly_temps = {1: 32, 2: 35, 3: 42, 4: 53, 5: 63, 6: 72, 
@@ -74,9 +97,11 @@ def load_dashboard_data():
         daily_aggregated['temperature'] = daily_aggregated['base_temp'] + np.random.normal(0, 5, len(daily_aggregated))
         daily_aggregated = daily_aggregated.drop(['month', 'base_temp'], axis=1)
     
-    return top_stations, daily_aggregated
+    return top_stations, daily_data
 
-top_stations, daily_data = load_dashboard_data()
+# Show loading spinner
+with st.spinner('Loading data... This may take a few minutes for the first run.'):
+    top_stations, daily_data = load_dashboard_data()
 
 # Display data metrics in sidebar
 st.sidebar.metric("Total Stations Analyzed", len(top_stations))
