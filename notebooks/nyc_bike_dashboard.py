@@ -159,8 +159,7 @@ with col1:
         y=top_stations['trip_count'],
         marker={
             'color': top_stations['trip_count'], 
-            'colorscale': 'Blues',
-            'colorbar': {'title': 'Trips'}
+            'colorscale': 'Blues'
         },
         hovertemplate='<b>%{x}</b><br>Trips: %{y:,}<extra></extra>'
     ))
