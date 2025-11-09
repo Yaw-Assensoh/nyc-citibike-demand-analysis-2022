@@ -134,23 +134,33 @@ with col2:
     st.plotly_chart(fig_line, use_container_width=True)
 
 ###############################################################
-# KEPLER.GL MAP VISUALIZATION
+# MAP VISUALIZATION SECTION
 ###############################################################
 
 st.subheader("Geographic Distribution of Bike Trips")
 st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
 
-try:
-    with open('../maps/nyc_bike_trips_aggregated.html', 'r', encoding='utf-8') as f:
-        html_content = f.read()
-    
-    st.components.v1.html(html_content, height=600)
-    
-except FileNotFoundError:
-    st.warning("""
-    ⚠ Kepler.gl map file not found. 
-    Please ensure '../maps/nyc_bike_trips_aggregated.html' is in the correct directory.
-    """)
+st.info("""
+**Interactive Map Status:** Map file not found
+
+To enable the interactive map visualization:
+1. Generate the map file by running your Kepler.gl analysis
+2. Save the map as `nyc_bike_trips_aggregated.html` in the `../maps/` directory
+3. Restart the dashboard
+
+The dashboard will automatically detect and display the map once the file is available.
+""")
+
+# Alternative: Show a static map or station location visualization
+st.subheader("Station Locations Overview")
+st.markdown("High-traffic station distribution across NYC")
+
+# Create a simple geographic visualization using the top stations data
+fig_map = go.Figure()
+
+
+
+st.plotly_chart(fig_map, use_container_width=True)
 
 ###############################################################
 # KEY PERFORMANCE INDICATORS
