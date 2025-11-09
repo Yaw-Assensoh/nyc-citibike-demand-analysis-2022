@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import os
 
 ###############################################################
 # PAGE CONFIGURATION
@@ -40,9 +41,84 @@ st.sidebar.header("Data Overview")
 # Load data with caching
 @st.cache_data
 def load_dashboard_data():
-    top_stations = pd.read_csv('top_20_stations.csv')
-    daily_data = pd.read_csv('daily_aggregated_data.csv')
-    daily_data['date'] = pd.to_datetime(daily_data['date'])
+    # Try multiple possible file names and locations
+    possible_station_files = [
+        'top_20_stations_full.csv',    # From notebook
+        'top_20_stations.csv',         # Original name
+        '../data/processed/top_20_stations.csv'
+    ]
+    
+    possible_daily_files = [
+        'daily_aggregated_data_full.csv',  # From notebook  
+        'daily_aggregated_data.csv',       # Original name
+        '../data/processed/daily_aggregated_data.csv'
+    ]
+    
+    top_stations = None
+    daily_data = None
+    
+    # Find and load top_stations
+    for file_path in possible_station_files:
+        if os.path.exists(file_path):
+            top_stations = pd.read_csv(file_path)
+            st.sidebar.success(f"✓ Loaded stations from: {file_path}")
+            break
+    
+    # Find and load daily_data  
+    for file_path in possible_daily_files:
+        if os.path.exists(file_path):
+            daily_data = pd.read_csv(file_path)
+            daily_data['date'] = pd.to_datetime(daily_data['date'])
+            st.sidebar.success(f"✓ Loaded daily data from: {file_path}")
+            break
+    
+    # If files not found, create sample data
+    if top_stations is None or daily_data is None:
+        st.sidebar.warning("Using sample data - CSV files not found. Please run the notebook first.")
+        top_stations, daily_data = create_sample_data()
+    
+    return top_stations, daily_data
+
+def create_sample_data():
+    """Create sample data for demonstration when CSV files are missing"""
+    # Sample top stations based on your notebook output
+    stations = [
+        'W 21 St & 6 Ave', 'West St & Chambers St', 'Broadway & W 58 St',
+        '6 Ave & W 33 St', '1 Ave & E 68 St', 'Broadway & E 14 St',
+        'Broadway & W 25 St', 'University Pl & E 14 St', 'Broadway & E 21 St',
+        'W 31 St & 7 Ave', 'E 33 St & 1 Ave', 'Cleveland Pl & Spring St',
+        '12 Ave & W 40 St', '6 Ave & W 34 St', 'West St & Liberty St',
+        '11 Ave & W 41 St', 'Lafayette St & E 8 St', 'Central Park S & 6 Ave',
+        'E 40 St & Park Ave', '8 Ave & W 33 St'
+    ]
+    trip_counts = [129018, 128456, 127890, 126543, 125678, 124321, 123456, 122890, 121234, 120567,
+                   119876, 119123, 118456, 117890, 117123, 116456, 115789, 115123, 114456, 113789]
+    
+    top_stations = pd.DataFrame({
+        'start_station_name': stations,
+        'trip_count': trip_counts
+    })
+    
+    # Sample daily data based on your notebook
+    dates = pd.date_range('2021-01-30', '2022-12-31', freq='D')
+    # Create realistic trip data with seasonal patterns
+    base_trips = 80000
+    seasonal_variation = np.sin(2 * np.pi * (dates.dayofyear / 365)) * 20000
+    random_noise = np.random.normal(0, 5000, len(dates))
+    daily_trips = (base_trips + seasonal_variation + random_noise).astype(int)
+    
+    # Create realistic temperature data
+    monthly_temps = {1: 32, 2: 35, 3: 42, 4: 53, 5: 63, 6: 72, 
+                     7: 77, 8: 76, 9: 68, 10: 57, 11: 48, 12: 38}
+    base_temp = [monthly_temps[date.month] for date in dates]
+    temperature = base_temp + np.random.normal(0, 5, len(dates))
+    
+    daily_data = pd.DataFrame({
+        'date': dates,
+        'daily_trips': daily_trips,
+        'temperature': temperature
+    })
+    
     return top_stations, daily_data
 
 top_stations, daily_data = load_dashboard_data()
@@ -141,15 +217,35 @@ st.subheader("Geographic Distribution of Bike Trips")
 st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
 
 try:
-    with open('nyc_bike_trips_aggregated.html', 'r', encoding='utf-8') as f:
-        html_content = f.read()
+    # Try multiple possible map locations
+    map_paths = [
+        'nyc_bike_trips_aggregated.html',
+        '../maps/nyc_bike_trips_aggregated.html',
+        './maps/nyc_bike_trips_aggregated.html'
+    ]
     
-    st.components.v1.html(html_content, height=600)
+    html_content = None
+    for map_path in map_paths:
+        if os.path.exists(map_path):
+            with open(map_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            st.success(f"✓ Loaded map from: {map_path}")
+            break
     
-except FileNotFoundError:
-    st.warning("""
-    ⚠ Kepler.gl map file not found. 
-    Please ensure 'nyc_bike_trips_aggregated.html' is in the same directory.
+    if html_content:
+        st.components.v1.html(html_content, height=600)
+    else:
+        st.warning("""
+        ⚠ Kepler.gl map file not found. 
+        To see the map visualization:
+        1. Run the notebook to generate the map HTML file
+        2. Ensure 'nyc_bike_trips_aggregated.html' is in the same directory
+        """)
+    
+except Exception as e:
+    st.warning(f"""
+    ⚠ Map visualization unavailable: {str(e)}
+    Please ensure the map HTML file is available.
     """)
 
 ###############################################################
@@ -201,3 +297,12 @@ with insight_col2:
     - Enhance maintenance schedules for high-traffic stations
     - Implement dynamic pricing during peak demand
     """)
+
+# Add instructions for getting real data
+st.sidebar.markdown("---")
+st.sidebar.info("""
+**To use real data:**
+1. Run the notebook cells to generate CSV files
+2. Restart this dashboard
+3. Real data will load automatically
+""")
