@@ -40,9 +40,8 @@ st.sidebar.header("Data Overview")
 # Load data with caching
 @st.cache_data
 def load_dashboard_data():
-    # Load the files created in the notebook
-    top_stations = pd.read_csv('top_20_stations_full.csv')
-    daily_data = pd.read_csv('daily_aggregated_data_full.csv')
+    top_stations = pd.read_csv('top_20_stations.csv')
+    daily_data = pd.read_csv('daily_aggregated_data.csv')
     daily_data['date'] = pd.to_datetime(daily_data['date'])
     return top_stations, daily_data
 
