@@ -160,8 +160,7 @@ with col1:
         marker={
             'color': top_stations['trip_count'], 
             'colorscale': 'Blues'
-        },
-        hovertemplate='<b>%{x}</b><br>Trips: %{y:,}<extra></extra>'
+        }
     ))
     
     fig_bar.update_layout(
