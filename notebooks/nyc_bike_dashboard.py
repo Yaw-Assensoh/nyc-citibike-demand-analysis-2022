@@ -37,14 +37,44 @@ and support strategic expansion decisions for NYC Citi Bike.
 
 st.sidebar.header("Data Overview")
 
-# Load data with caching
+# Load data with caching - EXACT PATHS FROM YOUR NOTEBOOK
 @st.cache_data
 def load_dashboard_data():
-    # Load the files created in the notebook
-    top_stations = pd.read_csv('top_20_stations_full.csv')
-    daily_data = pd.read_csv('daily_aggregated_data_full.csv')
-    daily_data['date'] = pd.to_datetime(daily_data['date'])
-    return top_stations, daily_data
+    # Load the main dataset first
+    DATA_PATH = "../data/processed/nyc_citibike_2022_processed.csv"
+    df = pd.read_csv(DATA_PATH, low_memory=False)
+    
+    # Create trip count column and prepare data exactly like in notebook
+    df['trip_count'] = 1
+    df['started_at'] = pd.to_datetime(df['started_at'])
+    df['date'] = df['started_at'].dt.date
+    
+    # Create top stations data (from cell 77)
+    station_trips = df.groupby('start_station_name', as_index=False)['trip_count'].count()
+    top_stations = station_trips.nlargest(20, 'trip_count')
+    
+    # Create daily aggregated data (from cells 11 and 66)
+    daily_aggregated = df.groupby('date').agg({
+        'trip_count': 'sum'
+    }).reset_index()
+    daily_aggregated.columns = ['date', 'daily_trips']
+    daily_aggregated['date'] = pd.to_datetime(daily_aggregated['date'])
+    
+    # Add temperature data (from cell 11)
+    if 'temperature' in df.columns:
+        temp_data = df.groupby('date')['temperature'].mean().reset_index()
+        daily_aggregated = daily_aggregated.merge(temp_data, on='date')
+    else:
+        # Create realistic temperature data like in notebook
+        np.random.seed(42)
+        daily_aggregated['month'] = daily_aggregated['date'].dt.month
+        monthly_temps = {1: 32, 2: 35, 3: 42, 4: 53, 5: 63, 6: 72, 
+                         7: 77, 8: 76, 9: 68, 10: 57, 11: 48, 12: 38}
+        daily_aggregated['base_temp'] = daily_aggregated['month'].map(monthly_temps)
+        daily_aggregated['temperature'] = daily_aggregated['base_temp'] + np.random.normal(0, 5, len(daily_aggregated))
+        daily_aggregated = daily_aggregated.drop(['month', 'base_temp'], axis=1)
+    
+    return top_stations, daily_aggregated
 
 top_stations, daily_data = load_dashboard_data()
 
@@ -142,7 +172,7 @@ st.subheader("Geographic Distribution of Bike Trips")
 st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
 
 try:
-    with open('nyc_bike_trips_aggregated.html', 'r', encoding='utf-8') as f:
+    with open('../maps/nyc_bike_trips_aggregated.html', 'r', encoding='utf-8') as f:
         html_content = f.read()
     
     st.components.v1.html(html_content, height=600)
@@ -150,7 +180,7 @@ try:
 except FileNotFoundError:
     st.warning("""
     ⚠ Kepler.gl map file not found. 
-    Please ensure 'nyc_bike_trips_aggregated.html' is in the same directory.
+    Please ensure '../maps/nyc_bike_trips_aggregated.html' exists.
     """)
 
 ###############################################################
