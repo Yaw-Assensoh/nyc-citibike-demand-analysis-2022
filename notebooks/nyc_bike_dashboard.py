@@ -37,12 +37,12 @@ and support strategic expansion decisions for NYC Citi Bike.
 
 st.sidebar.header("Data Overview")
 
-# Load data with caching - USING PROPER DEPLOYMENT PATHS
+# Load data with caching
 @st.cache_data
 def load_dashboard_data():
-    # Load the files with proper relative paths
-    top_stations = pd.read_csv('../data/processed/top_20_stations.csv')
-    daily_data = pd.read_csv('../data/processed/daily_aggregated_data.csv')
+    # Load the files created in the notebook
+    top_stations = pd.read_csv('top_20_stations_full.csv')
+    daily_data = pd.read_csv('daily_aggregated_data_full.csv')
     daily_data['date'] = pd.to_datetime(daily_data['date'])
     return top_stations, daily_data
 
@@ -142,7 +142,7 @@ st.subheader("Geographic Distribution of Bike Trips")
 st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
 
 try:
-    with open('../maps/nyc_bike_trips_aggregated.html', 'r', encoding='utf-8') as f:
+    with open('nyc_bike_trips_aggregated.html', 'r', encoding='utf-8') as f:
         html_content = f.read()
     
     st.components.v1.html(html_content, height=600)
@@ -150,7 +150,7 @@ try:
 except FileNotFoundError:
     st.warning("""
     ⚠ Kepler.gl map file not found. 
-    Please ensure '../maps/nyc_bike_trips_aggregated.html' is in the correct directory.
+    Please ensure 'nyc_bike_trips_aggregated.html' is in the same directory.
     """)
 
 ###############################################################
