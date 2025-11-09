@@ -8,7 +8,6 @@ import pandas as pd
 import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import os
 
 ###############################################################
 # PAGE CONFIGURATION
@@ -41,72 +40,10 @@ st.sidebar.header("Data Overview")
 # Load data with caching
 @st.cache_data
 def load_dashboard_data():
-    # Try multiple possible file locations
-    possible_paths = [
-        '../data/processed/top_20_stations.csv',  
-        './data/processed/top_20_stations.csv',   
-        'top_20_stations.csv',                    
-        '../top_20_stations.csv'                  
-    ]
-    
-    top_stations = None
-    daily_data = None
-    
-    # Find and load top_stations
-    for path in possible_paths:
-        if os.path.exists(path):
-            top_stations = pd.read_csv(path)
-            st.sidebar.success(f"✓ Loaded stations from: {path}")
-            break
-    
-    # Find and load daily_data
-    daily_paths = [
-        '../data/processed/daily_aggregated_data.csv',
-        './data/processed/daily_aggregated_data.csv', 
-        'daily_aggregated_data.csv',
-        '../daily_aggregated_data.csv'
-    ]
-    
-    for path in daily_paths:
-        if os.path.exists(path):
-            daily_data = pd.read_csv(path)
-            daily_data['date'] = pd.to_datetime(daily_data['date'])
-            st.sidebar.success(f"✓ Loaded daily data from: {path}")
-            break
-    
-    # If files not found, create sample data
-    if top_stations is None or daily_data is None:
-        st.sidebar.warning("Using sample data - actual data files not found")
-        top_stations, daily_data = create_sample_data()
-    
-    return top_stations, daily_data
-
-def create_sample_data():
-    """Create sample data for demonstration"""
-    # Sample top stations
-    stations = [
-        'Pershing Square North', 'E 17 St & Broadway', 'W 21 St & 6 Ave',
-        'Broadway & E 22 St', 'E 31 St & 3 Ave', 'W 41 St & 8 Ave',
-        '1 Ave & E 15 St', 'W 33 St & 7 Ave', 'E 20 St & 2 Ave', '8 Ave & W 31 St'
-    ]
-    trip_counts = [12500, 11800, 11200, 10800, 10500, 9800, 9200, 8800, 8500, 8200]
-    
-    top_stations = pd.DataFrame({
-        'start_station_name': stations,
-        'trip_count': trip_counts
-    })
-    
-    # Sample daily data
-    dates = pd.date_range('2022-01-01', '2022-12-31', freq='D')
-    daily_trips = np.random.randint(8000, 25000, len(dates))
-    temperature = np.random.uniform(30, 85, len(dates))
-    
-    daily_data = pd.DataFrame({
-        'date': dates,
-        'daily_trips': daily_trips,
-        'temperature': temperature
-    })
-    
+    # Load the files created in the notebook
+    top_stations = pd.read_csv('top_20_stations_full.csv')
+    daily_data = pd.read_csv('daily_aggregated_data_full.csv')
+    daily_data['date'] = pd.to_datetime(daily_data['date'])
     return top_stations, daily_data
 
 top_stations, daily_data = load_dashboard_data()
@@ -205,39 +142,15 @@ st.subheader("Geographic Distribution of Bike Trips")
 st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
 
 try:
-    # Try multiple possible map locations
-    map_paths = [
-        '../maps/nyc_bike_trips_aggregated.html',
-        '../maps/nyc_citibike_interactive_map.html',
-        './maps/nyc_bike_trips_aggregated.html',
-        './maps/nyc_citibike_interactive_map.html',
-        'nyc_bike_trips_aggregated.html',
-        'nyc_citibike_interactive_map.html'
-    ]
+    with open('nyc_bike_trips_aggregated.html', 'r', encoding='utf-8') as f:
+        html_content = f.read()
     
-    html_content = None
-    for map_path in map_paths:
-        if os.path.exists(map_path):
-            with open(map_path, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            st.success(f"✓ Loaded map from: {map_path}")
-            break
-    
-    if html_content:
-        st.components.v1.html(html_content, height=600)
-    else:
-        st.warning("""
-        ⚠ Kepler.gl map file not found. 
-        Please ensure the map HTML file is in one of these locations:
-        - ../maps/nyc_bike_trips_aggregated.html
-        - ../maps/nyc_citibike_interactive_map.html
-        - ./maps/nyc_bike_trips_aggregated.html
-        """)
+    st.components.v1.html(html_content, height=600)
     
 except FileNotFoundError:
     st.warning("""
     ⚠ Kepler.gl map file not found. 
-    Please ensure the map HTML file is available in the maps folder.
+    Please ensure 'nyc_bike_trips_aggregated.html' is in the same directory.
     """)
 
 ###############################################################
