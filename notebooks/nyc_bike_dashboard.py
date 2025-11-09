@@ -40,8 +40,8 @@ st.sidebar.header("Data Overview")
 # Load data with caching
 @st.cache_data
 def load_dashboard_data():
-    top_stations = pd.read_csv('top_20_stations.csv')
-    daily_data = pd.read_csv('daily_aggregated_data.csv')
+    top_stations = pd.read_csv('data/processed/top_20_stations.csv')
+    daily_data = pd.read_csv('data/processed/daily_aggregated_data.csv')
     daily_data['date'] = pd.to_datetime(daily_data['date'])
     return top_stations, daily_data
 
@@ -141,7 +141,7 @@ st.subheader("Geographic Distribution of Bike Trips")
 st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
 
 try:
-    with open('nyc_bike_trips_aggregated.html', 'r', encoding='utf-8') as f:
+    with open('maps/nyc_bike_trips_aggregated.html', 'r', encoding='utf-8') as f:
         html_content = f.read()
     
     st.components.v1.html(html_content, height=600)
@@ -149,7 +149,7 @@ try:
 except FileNotFoundError:
     st.warning("""
     ⚠ Kepler.gl map file not found. 
-    Please ensure 'nyc_bike_trips_aggregated.html' is in the same directory.
+    Please ensure 'maps/nyc_bike_trips_aggregated.html' is in the same directory.
     """)
 
 ###############################################################
