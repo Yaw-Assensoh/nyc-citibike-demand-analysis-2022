@@ -8,7 +8,6 @@ import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import os
-from PIL import Image
 
 ###############################################################
 # PAGE CONFIGURATION
@@ -47,17 +46,34 @@ def load_dashboard_data():
     
     # Try multiple possible locations for data files 
     possible_paths = [
-        # For local development
         os.path.join(base_dir, "top_20_stations_full.csv"),
         os.path.join(base_dir, "top_20_stations.csv"),
-        os.path.join(base_dir, "../data/processed/top_20_stations.csv"),
         os.path.join(base_dir, "../data/processed/top_20_stations_full.csv"),
-        # For deployment
-        os.path.join(base_dir, "data/processed/top_20_stations.csv"),
+        os.path.join(base_dir, "../data/processed/top_20_stations.csv"),
         os.path.join(base_dir, "data/processed/top_20_stations_full.csv"),
+        os.path.join(base_dir, "data/processed/top_20_stations.csv"),
     ]
     
-      # Find and load daily_data
+    top_stations = None
+    daily_data = None
+    
+    # Find and load top_stations
+    for path in possible_paths:
+        if os.path.exists(path):
+            top_stations = pd.read_csv(path)
+            break
+    
+    # Try multiple possible locations for daily data
+    daily_paths = [
+        os.path.join(base_dir, "daily_aggregated_data_full.csv"),
+        os.path.join(base_dir, "daily_aggregated_data.csv"),
+        os.path.join(base_dir, "../data/processed/daily_aggregated_data_full.csv"),
+        os.path.join(base_dir, "../data/processed/daily_aggregated_data.csv"),
+        os.path.join(base_dir, "data/processed/daily_aggregated_data_full.csv"),
+        os.path.join(base_dir, "data/processed/daily_aggregated_data.csv"),
+    ]
+    
+    # Find and load daily_data
     for path in daily_paths:
         if os.path.exists(path):
             daily_data = pd.read_csv(path)
@@ -148,14 +164,6 @@ if page == "Introduction":
     - **Recommendations**: Strategic insights based on comprehensive analysis
     """)
     
-    # Display data metrics in sidebar 
-    if df is not None:
-        st.sidebar.header(" Data Overview")
-        st.sidebar.metric("Total Stations", df['start_station_name'].nunique())
-        st.sidebar.metric("Date Range", f"{df['started_at'].min().date()} to {df['started_at'].max().date()}")
-        total_trips = df['trip_count'].sum() if 'trip_count' in df.columns else len(df)
-        st.sidebar.metric("Total Trips", f"{total_trips:,}")
-    
     st.markdown("---")
     st.markdown(" *Use the dropdown menu on the left to navigate through different aspects of the analysis*")
 
@@ -208,7 +216,7 @@ elif page == "Weather Impact Analysis":
         
         st.plotly_chart(fig_line, use_container_width=True)
         
-        # Interpretation section (REQUIRED)
+        # Interpretation 
         st.markdown("""
         ###  Interpretation of Findings
         
@@ -231,36 +239,21 @@ elif page == "Most Popular Stations":
     st.title(" Most Popular Stations")
     st.markdown("### Top 20 Most Popular Stations Analysis")
     
-    if df is not None:
-        # Season filter in sidebar
-        st.sidebar.subheader("Season Filter")
-        season_filter = st.sidebar.multiselect(
-            'Select seasons:',
-            options=df['season'].unique(),
-            default=df['season'].unique()
-        )
-        
-        # Filter data based on selection
-        df_filtered = df[df['season'].isin(season_filter)]
-        
-        # Calculate metrics
-        station_trips = df_filtered.groupby('start_station_name', as_index=False)['trip_count'].sum()
-        top_20_stations = station_trips.nlargest(20, 'trip_count')
-        
+    if top_stations is not None:
         # Display metrics
-        total_rides = top_20_stations['trip_count'].sum()
+        total_rides = top_stations['trip_count'].sum()
         st.metric("Total Rides in Selection", f"{total_rides:,}")
         
         # Create bar chart 
         fig_bar = go.Figure(go.Bar(
-            x=top_20_stations['start_station_name'],
-            y=top_20_stations['trip_count'],
-            marker_color=top_20_stations['trip_count'],
+            x=top_stations['start_station_name'],
+            y=top_stations['trip_count'],
+            marker_color=top_stations['trip_count'],
             marker_colorscale='Blues'
         ))
         
         fig_bar.update_layout(
-            title=f"Top 20 Most Popular Bike Stations ({', '.join(season_filter)})",
+            title="Top 20 Most Popular Bike Stations",
             xaxis_title='Start Stations',
             yaxis_title='Number of Trips',
             height=500,
@@ -269,7 +262,7 @@ elif page == "Most Popular Stations":
         
         st.plotly_chart(fig_bar, use_container_width=True)
         
-        # Interpretation section (REQUIRED)
+        # Interpretation 
         st.markdown("""
         ###  Interpretation of Findings
         
@@ -287,78 +280,45 @@ elif page == "Most Popular Stations":
         st.error("Unable to load data for station analysis")
 
 ###############################################################
-# INTERACTIVE MAP PAGE - 
+# INTERACTIVE MAP PAGE
 ###############################################################
 
-st.subheader("Geographic Distribution of Bike Trips")
-st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
+elif page == "Interactive Map with Aggregated Bike Trips":
+    st.title("Interactive Map with Aggregated Bike Trips")
+    st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
 
-# Try to load the map with more specific error handling
-try:
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # More comprehensive search for the map file
-    map_search_paths = [
-        "nyc_bike_trips_aggregated.html",
-        "./nyc_bike_trips_aggregated.html",
-        "maps/nyc_bike_trips_aggregated.html", 
-        "./maps/nyc_bike_trips_aggregated.html",
-        "../maps/nyc_bike_trips_aggregated.html",
-        "../nyc_bike_trips_aggregated.html",
-        "data/maps/nyc_bike_trips_aggregated.html",
-        "../data/maps/nyc_bike_trips_aggregated.html"
-    ]
-    
-    html_content = None
-    map_found_path = None
-    
-    for map_path in map_search_paths:
-        full_path = os.path.join(base_dir, map_path)
-        if os.path.exists(full_path):
-            try:
-                with open(full_path, 'r', encoding='utf-8') as f:
+    # Try to load the map
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        map_paths = [
+            os.path.join(base_dir, "nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "../maps/nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "maps/nyc_bike_trips_aggregated.html"),
+        ]
+        
+        html_content = None
+        for map_path in map_paths:
+            if os.path.exists(map_path):
+                with open(map_path, 'r', encoding='utf-8') as f:
                     html_content = f.read()
-                map_found_path = full_path
-                st.sidebar.success(f"Map loaded from: {map_path}")
                 break
-            except Exception as e:
-                st.sidebar.warning(f"Found but couldn't read: {map_path}")
-                continue
+        
+        if html_content:
+            st.components.v1.html(html_content, height=600)
+        else:
+            st.info("""
+            **Map Visualization**
+            
+            To view the interactive map, ensure the map file is available in one of these locations:
+            - `nyc_bike_trips_aggregated.html` (same directory)
+            - `maps/nyc_bike_trips_aggregated.html`
+            - `../maps/nyc_bike_trips_aggregated.html`
+            """)
+        
+    except Exception as e:
+        st.info("Map visualization not available. The dashboard will still function with the charts above.")
     
-    if html_content:
-        st.components.v1.html(html_content, height=600, scrolling=True)
-    else:
-        # Show more helpful information about finding the map
-        st.info("""
-        ** Interactive Map Visualization**
-        
-        To view the interactive map, please ensure the map file `nyc_bike_trips_aggregated.html` is available in one of these locations relative to your dashboard script:
-        
-        - Same directory: `nyc_bike_trips_aggregated.html`
-        - `maps/nyc_bike_trips_aggregated.html` 
-        - `../maps/nyc_bike_trips_aggregated.html`
-        - `data/maps/nyc_bike_trips_aggregated.html`
-        
-        The map displays aggregated bike trips across NYC, showing spatial patterns and high-traffic corridors for expansion planning.
-        """)
-        
-        # Show current directory info to help user
-        st.sidebar.info(f"Current directory: {base_dir}")
-        
-        # List files in current directory to help debugging
-        try:
-            current_files = os.listdir(base_dir)
-            map_files = [f for f in current_files if f.endswith('.html')]
-            if map_files:
-                st.sidebar.write("HTML files in current directory:", map_files)
-        except:
-            pass
-    
-except Exception as e:
-    st.error(f"Error loading map: {str(e)}")
-    st.info("The dashboard charts are still fully functional. Please check the map file location.")
-    
-    # Interpretation section (REQUIRED)
+    # Interpretation 
     st.markdown("""
     ### Interpretation of Findings
     
@@ -370,36 +330,11 @@ except Exception as e:
     """)
 
 ###############################################################
-# KEY PERFORMANCE INDICATORS
-###############################################################
-
-st.subheader("Key Performance Indicators")
-
-# Create KPI columns
-kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-
-with kpi1:
-    total_trips = top_stations['trip_count'].sum()
-    st.metric("Total Trips Analyzed", f"{total_trips:,}")
-
-with kpi2:
-    avg_daily_trips = daily_data['daily_trips'].mean()
-    st.metric("Average Daily Trips", f"{avg_daily_trips:,.0f}")
-
-with kpi3:
-    top_station = top_stations.iloc[0]['start_station_name']
-    top_trips = top_stations.iloc[0]['trip_count']
-    st.metric("Busiest Station", f"{top_trips:,}", help=f"Station: {top_station}")
-
-with kpi4:
-    peak_daily = daily_data['daily_trips'].max()
-    st.metric("Peak Daily Trips", f"{peak_daily:,}")
-
-###############################################################
 # RECOMMENDATIONS PAGE
 ###############################################################
 
-
+elif page == "Recommendations":
+    st.title("Recommendations")
     st.markdown("### Strategic Insights for NYC Citi Bike Operations")
     
     st.markdown("""
@@ -448,7 +383,7 @@ with kpi4:
     """)
 
 ###############################################################
-# FOOTER (Same as original)
+# FOOTER
 ###############################################################
 
 st.sidebar.markdown("---")
