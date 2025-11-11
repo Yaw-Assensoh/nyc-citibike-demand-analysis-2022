@@ -37,7 +37,7 @@ page = st.sidebar.selectbox(
 )
 
 ###############################################################
-# DATA LOADING - EXACT SAME AS ORIGINAL WORKING DASHBOARD
+# DATA LOADING 
 ###############################################################
 
 @st.cache_data
@@ -48,109 +48,78 @@ def load_dashboard_data():
     # Try multiple possible locations for data files 
     possible_paths = [
         # For local development
-        os.path.join(base_dir, "nyc_citibike_reduced.csv"),
-        os.path.join(base_dir, "reduced_data_to_plot_7.csv"),
-        os.path.join(base_dir, "../data/processed/nyc_citibike_reduced.csv"),
+        os.path.join(base_dir, "top_20_stations_full.csv"),
+        os.path.join(base_dir, "top_20_stations.csv"),
+        os.path.join(base_dir, "../data/processed/top_20_stations.csv"),
+        os.path.join(base_dir, "../data/processed/top_20_stations_full.csv"),
         # For deployment
-        os.path.join(base_dir, "data/processed/nyc_citibike_reduced.csv"),
-        os.path.join(base_dir, "data/processed/reduced_data_to_plot_7.csv"),
+        os.path.join(base_dir, "data/processed/top_20_stations.csv"),
+        os.path.join(base_dir, "data/processed/top_20_stations_full.csv"),
     ]
     
-    df = None
-    
-    # Find and load data - 
-    for path in possible_paths:
+      # Find and load daily_data
+    for path in daily_paths:
         if os.path.exists(path):
-            df = pd.read_csv(path)
-            st.sidebar.success(f"✓ Data loaded from: {os.path.basename(path)}")
+            daily_data = pd.read_csv(path)
+            daily_data['date'] = pd.to_datetime(daily_data['date'])
             break
     
-    # If file not found, create sample data 
-    if df is None:
+    # If files not found, create sample data
+    if top_stations is None or daily_data is None:
         st.sidebar.warning("Using sample data - CSV files not found in expected locations")
         return create_sample_data()
     
-    # Process data 
-    df['started_at'] = pd.to_datetime(df['started_at'])
-    df['date'] = df['started_at'].dt.date
-    
-    # Create daily aggregated data 
-    daily_aggregated = df.groupby('date').agg({
-        'trip_count': 'sum'
-    }).reset_index()
-    daily_aggregated.columns = ['date', 'daily_trips']
-    daily_aggregated['date'] = pd.to_datetime(daily_aggregated['date'])
-    
-    # Create temperature data 
-    np.random.seed(42)
-    daily_aggregated['month'] = daily_aggregated['date'].dt.month
-    
-    # NYC average temperatures by month 
-    monthly_temps = {1: 32, 2: 35, 3: 42, 4: 53, 5: 63, 6: 72, 
-                     7: 77, 8: 76, 9: 68, 10: 57, 11: 48, 12: 38}
-    
-    daily_aggregated['base_temp'] = daily_aggregated['month'].map(monthly_temps)
-    daily_aggregated['temperature'] = daily_aggregated['base_temp'] + np.random.normal(0, 5, len(daily_aggregated))
-    daily_aggregated = daily_aggregated.drop('base_temp', axis=1)
-    
-    # Add season column if not present
-    if 'season' not in df.columns:
-        df['month'] = df['started_at'].dt.month
-        df['season'] = df['month'].apply(lambda x: 
-            'Winter' if x in [12,1,2] else 
-            'Spring' if x in [3,4,5] else 
-            'Summer' if x in [6,7,8] else 'Fall'
-        )
-    
-    return df, daily_aggregated
+    return top_stations, daily_data
 
 def create_sample_data():
-    """Create sample data for demonstration """
-    # Sample stations based on actual data from your original
+    """Create sample data for demonstration"""
+    # Sample top stations based on actual data - FIXED: Now includes 20 stations
     stations = [
         'W 21 St & 6 Ave', 'West St & Chambers St', 'Broadway & W 58 St',
         '6 Ave & W 33 St', '1 Ave & E 68 St', 'Broadway & E 14 St',
         'Broadway & W 25 St', 'University Pl & E 14 St', 'Broadway & E 21 St',
-        'W 31 St & 7 Ave'
+        'W 31 St & 7 Ave', 'E 33 St & 1 Ave', 'Cleveland Pl & Spring St',
+        '12 Ave & W 40 St', '6 Ave & W 34 St', 'West St & Liberty St',
+        '11 Ave & W 41 St', 'Lafayette St & E 8 St', 'Central Park S & 6 Ave',
+        'E 40 St & Park Ave', '8 Ave & W 33 St'
     ]
+    trip_counts = [129018, 128456, 127890, 126543, 125678, 124321, 123456, 122890, 121234, 120567,
+                   119876, 119123, 118456, 117890, 117123, 116456, 115789, 115123, 114456, 113789]
     
-    # Create sample DataFrame
+    top_stations = pd.DataFrame({
+        'start_station_name': stations,
+        'trip_count': trip_counts
+    })
+    
+    # Sample daily data
     dates = pd.date_range('2021-01-30', '2022-12-31', freq='D')
-    sample_data = []
+    base_trips = 80000
+    seasonal_variation = np.sin(2 * np.pi * (dates.dayofyear / 365)) * 20000
+    random_noise = np.random.normal(0, 5000, len(dates))
+    daily_trips = (base_trips + seasonal_variation + random_noise).astype(int)
     
-    for date in dates[:500]:  # Smaller sample for demo
-        for station in stations[:5]:  # Fewer stations for demo
-            sample_data.append({
-                'started_at': date,
-                'start_station_name': station,
-                'trip_count': 1,
-                'season': 'Winter' if date.month in [12,1,2] else 
-                         'Spring' if date.month in [3,4,5] else 
-                         'Summer' if date.month in [6,7,8] else 'Fall'
-            })
-    
-    df = pd.DataFrame(sample_data)
-    df['date'] = df['started_at'].dt.date
-    
-    # Create daily aggregated data
-    daily_aggregated = df.groupby('date').agg({
-        'trip_count': 'sum'
-    }).reset_index()
-    daily_aggregated.columns = ['date', 'daily_trips']
-    daily_aggregated['date'] = pd.to_datetime(daily_aggregated['date'])
-    
-    # Add temperature data
-    np.random.seed(42)
-    daily_aggregated['month'] = daily_aggregated['date'].dt.month
+    # Create realistic temperature data
     monthly_temps = {1: 32, 2: 35, 3: 42, 4: 53, 5: 63, 6: 72, 
                      7: 77, 8: 76, 9: 68, 10: 57, 11: 48, 12: 38}
-    daily_aggregated['temperature'] = daily_aggregated['month'].map(monthly_temps) + np.random.normal(0, 5, len(daily_aggregated))
+    base_temp = [monthly_temps[date.month] for date in dates]
+    temperature = base_temp + np.random.normal(0, 5, len(dates))
     
-    return df, daily_aggregated
+    daily_data = pd.DataFrame({
+        'date': dates,
+        'daily_trips': daily_trips,
+        'temperature': temperature
+    })
+    
+    return top_stations, daily_data
 
 # Load the data
 with st.spinner('Loading dashboard data...'):
-    df, daily_data = load_dashboard_data()
+    top_stations, daily_data = load_dashboard_data()
+
+# Display data metrics in sidebar
+st.sidebar.metric("Total Stations Analyzed", len(top_stations))
+st.sidebar.metric("Date Range", f"{daily_data['date'].min().date()} to {daily_data['date'].max().date()}")
+st.sidebar.metric("Peak Daily Trips", f"{daily_data['daily_trips'].max():,}")
 
 ###############################################################
 # INTRODUCTION PAGE
@@ -318,46 +287,76 @@ elif page == "Most Popular Stations":
         st.error("Unable to load data for station analysis")
 
 ###############################################################
-# INTERACTIVE MAP PAGE - USING SAME APPROACH AS ORIGINAL
+# INTERACTIVE MAP PAGE - 
 ###############################################################
 
-elif page == "Interactive Map with Aggregated Bike Trips":
-    st.title(" Interactive Map with Aggregated Bike Trips")
-    st.markdown("### Geographic Distribution of Bike Trips")
+st.subheader("Geographic Distribution of Bike Trips")
+st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
+
+# Try to load the map with more specific error handling
+try:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Map visualization - SAME APPROACH AS ORIGINAL
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        map_paths = [
-            os.path.join(base_dir, "nyc_bike_trips_aggregated.html"),
-            os.path.join(base_dir, "../maps/nyc_bike_trips_aggregated.html"),
-            os.path.join(base_dir, "maps/nyc_bike_trips_aggregated.html"),
-        ]
-        
-        html_content = None
-        for map_path in map_paths:
-            if os.path.exists(map_path):
-                with open(map_path, 'r', encoding='utf-8') as f:
+    # More comprehensive search for the map file
+    map_search_paths = [
+        "nyc_bike_trips_aggregated.html",
+        "./nyc_bike_trips_aggregated.html",
+        "maps/nyc_bike_trips_aggregated.html", 
+        "./maps/nyc_bike_trips_aggregated.html",
+        "../maps/nyc_bike_trips_aggregated.html",
+        "../nyc_bike_trips_aggregated.html",
+        "data/maps/nyc_bike_trips_aggregated.html",
+        "../data/maps/nyc_bike_trips_aggregated.html"
+    ]
+    
+    html_content = None
+    map_found_path = None
+    
+    for map_path in map_search_paths:
+        full_path = os.path.join(base_dir, map_path)
+        if os.path.exists(full_path):
+            try:
+                with open(full_path, 'r', encoding='utf-8') as f:
                     html_content = f.read()
+                map_found_path = full_path
+                st.sidebar.success(f"Map loaded from: {map_path}")
                 break
+            except Exception as e:
+                st.sidebar.warning(f"Found but couldn't read: {map_path}")
+                continue
+    
+    if html_content:
+        st.components.v1.html(html_content, height=600, scrolling=True)
+    else:
+        # Show more helpful information about finding the map
+        st.info("""
+        ** Interactive Map Visualization**
         
-        if html_content:
-            st.components.v1.html(html_content, height=600)
-            st.success("✓ Interactive map loaded successfully")
-        else:
-            st.info("""
-            **Interactive Map Visualization**
-            
-            To view the interactive map, ensure the map file is available in one of these locations:
-            - `nyc_bike_trips_aggregated.html` (same directory)
-            - `maps/nyc_bike_trips_aggregated.html`
-            - `../maps/nyc_bike_trips_aggregated.html`
-            
-            The map displays aggregated bike trips across NYC, showing spatial patterns and high-traffic corridors.
-            """)
+        To view the interactive map, please ensure the map file `nyc_bike_trips_aggregated.html` is available in one of these locations relative to your dashboard script:
         
-    except Exception as e:
-        st.info("Map visualization not available. The dashboard will still function with the analytical charts above.")
+        - Same directory: `nyc_bike_trips_aggregated.html`
+        - `maps/nyc_bike_trips_aggregated.html` 
+        - `../maps/nyc_bike_trips_aggregated.html`
+        - `data/maps/nyc_bike_trips_aggregated.html`
+        
+        The map displays aggregated bike trips across NYC, showing spatial patterns and high-traffic corridors for expansion planning.
+        """)
+        
+        # Show current directory info to help user
+        st.sidebar.info(f"Current directory: {base_dir}")
+        
+        # List files in current directory to help debugging
+        try:
+            current_files = os.listdir(base_dir)
+            map_files = [f for f in current_files if f.endswith('.html')]
+            if map_files:
+                st.sidebar.write("HTML files in current directory:", map_files)
+        except:
+            pass
+    
+except Exception as e:
+    st.error(f"Error loading map: {str(e)}")
+    st.info("The dashboard charts are still fully functional. Please check the map file location.")
     
     # Interpretation section (REQUIRED)
     st.markdown("""
@@ -371,11 +370,36 @@ elif page == "Interactive Map with Aggregated Bike Trips":
     """)
 
 ###############################################################
+# KEY PERFORMANCE INDICATORS
+###############################################################
+
+st.subheader("Key Performance Indicators")
+
+# Create KPI columns
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+
+with kpi1:
+    total_trips = top_stations['trip_count'].sum()
+    st.metric("Total Trips Analyzed", f"{total_trips:,}")
+
+with kpi2:
+    avg_daily_trips = daily_data['daily_trips'].mean()
+    st.metric("Average Daily Trips", f"{avg_daily_trips:,.0f}")
+
+with kpi3:
+    top_station = top_stations.iloc[0]['start_station_name']
+    top_trips = top_stations.iloc[0]['trip_count']
+    st.metric("Busiest Station", f"{top_trips:,}", help=f"Station: {top_station}")
+
+with kpi4:
+    peak_daily = daily_data['daily_trips'].max()
+    st.metric("Peak Daily Trips", f"{peak_daily:,}")
+
+###############################################################
 # RECOMMENDATIONS PAGE
 ###############################################################
 
-else:
-    st.title(" Recommendations and Conclusions")
+
     st.markdown("### Strategic Insights for NYC Citi Bike Operations")
     
     st.markdown("""
