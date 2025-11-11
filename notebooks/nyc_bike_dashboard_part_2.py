@@ -11,7 +11,7 @@ import os
 from PIL import Image
 
 ###############################################################
-# PAGE CONFIGURATION 
+# PAGE CONFIGURATION
 ###############################################################
 
 st.set_page_config(
@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 ###############################################################
-# SIDEBAR - PAGE SELECTION 
+# SIDEBAR - PAGE SELECTION
 ###############################################################
 
 page = st.sidebar.selectbox(
@@ -37,49 +37,111 @@ page = st.sidebar.selectbox(
 )
 
 ###############################################################
-# DATA LOADING 
+# DATA LOADING - USING SAME APPROACH AS ORIGINAL WORKING DASHBOARD
 ###############################################################
 
 @st.cache_data
 def load_dashboard_data():
-    # Using the same deployment-ready paths as your original
+    # Define base directory relative to script location - SAME AS ORIGINAL
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Load reduced dataset
-    reduced_data_path = os.path.join(base_dir, "nyc_citibike_reduced.csv")
+    # Try multiple possible locations for data files - SAME AS ORIGINAL
+    possible_paths = [
+        # For local development
+        os.path.join(base_dir, "nyc_citibike_reduced.csv"),
+        os.path.join(base_dir, "../data/processed/nyc_citibike_reduced.csv"),
+        # For deployment
+        os.path.join(base_dir, "data/processed/nyc_citibike_reduced.csv"),
+        # Fallback to original file names if needed
+        os.path.join(base_dir, "reduced_data_to_plot_7.csv"),
+    ]
     
-    try:
-        df = pd.read_csv(reduced_data_path)
-        df['started_at'] = pd.to_datetime(df['started_at'])
-        
-        # Create daily aggregated data (same as your original)
-        df['date'] = df['started_at'].dt.date
-        daily_aggregated = df.groupby('date').agg({
-            'trip_count': 'sum'
-        }).reset_index()
-        daily_aggregated.columns = ['date', 'daily_trips']
-        daily_aggregated['date'] = pd.to_datetime(daily_aggregated['date'])
-        
-        # Create temperature data (same synthetic approach as your original)
-        np.random.seed(42)
-        daily_aggregated['month'] = daily_aggregated['date'].dt.month
-        
-        # NYC average temperatures by month (same as your original)
-        monthly_temps = {1: 32, 2: 35, 3: 42, 4: 53, 5: 63, 6: 72, 
-                         7: 77, 8: 76, 9: 68, 10: 57, 11: 48, 12: 38}
-        
-        daily_aggregated['base_temp'] = daily_aggregated['month'].map(monthly_temps)
-        daily_aggregated['temperature'] = daily_aggregated['base_temp'] + np.random.normal(0, 5, len(daily_aggregated))
-        daily_aggregated = daily_aggregated.drop('base_temp', axis=1)
-        
-        return df, daily_aggregated
-        
-    except FileNotFoundError:
-        st.error("Reduced data file not found. Please ensure 'nyc_citibike_reduced.csv' is in the working directory.")
-        return None, None
+    df = None
+    
+    # Find and load data - SAME LOGIC AS ORIGINAL
+    for path in possible_paths:
+        if os.path.exists(path):
+            df = pd.read_csv(path)
+            st.sidebar.success(f"✓ Data loaded from: {os.path.basename(path)}")
+            break
+    
+    # If file not found, create sample data - 
+    if df is None:
+        st.sidebar.warning("Using sample data - CSV files not found in expected locations")
+        return create_sample_data()
+    
+    # Process data - 
+    df['started_at'] = pd.to_datetime(df['started_at'])
+    df['date'] = df['started_at'].dt.date
+    
+    # Create daily aggregated data - 
+    daily_aggregated = df.groupby('date').agg({
+        'trip_count': 'sum'
+    }).reset_index()
+    daily_aggregated.columns = ['date', 'daily_trips']
+    daily_aggregated['date'] = pd.to_datetime(daily_aggregated['date'])
+    
+    # Create temperature data -
+    np.random.seed(42)
+    daily_aggregated['month'] = daily_aggregated['date'].dt.month
+    
+    # NYC average temperatures by month - 
+    monthly_temps = {1: 32, 2: 35, 3: 42, 4: 53, 5: 63, 6: 72, 
+                     7: 77, 8: 76, 9: 68, 10: 57, 11: 48, 12: 38}
+    
+    daily_aggregated['base_temp'] = daily_aggregated['month'].map(monthly_temps)
+    daily_aggregated['temperature'] = daily_aggregated['base_temp'] + np.random.normal(0, 5, len(daily_aggregated))
+    daily_aggregated = daily_aggregated.drop('base_temp', axis=1)
+    
+    return df, daily_aggregated
+
+def create_sample_data():
+    """Create sample data for demonstration """
+    # Sample stations based on actual data from your original
+    stations = [
+        'W 21 St & 6 Ave', 'West St & Chambers St', 'Broadway & W 58 St',
+        '6 Ave & W 33 St', '1 Ave & E 68 St', 'Broadway & E 14 St',
+        'Broadway & W 25 St', 'University Pl & E 14 St', 'Broadway & E 21 St',
+        'W 31 St & 7 Ave', 'E 33 St & 1 Ave', 'Cleveland Pl & Spring St',
+        '12 Ave & W 40 St', '6 Ave & W 34 St', 'West St & Liberty St',
+        '11 Ave & W 41 St', 'Lafayette St & E 8 St', 'Central Park S & 6 Ave',
+        'E 40 St & Park Ave', '8 Ave & W 33 St'
+    ]
+    
+    # Create sample DataFrame
+    dates = pd.date_range('2021-01-30', '2022-12-31', freq='D')
+    sample_data = []
+    
+    for date in dates[:1000]:  # Smaller sample for demo
+        for station in stations[:5]:  # Fewer stations for demo
+            sample_data.append({
+                'started_at': date,
+                'start_station_name': station,
+                'trip_count': 1
+            })
+    
+    df = pd.DataFrame(sample_data)
+    df['date'] = df['started_at'].dt.date
+    
+    # Create daily aggregated data
+    daily_aggregated = df.groupby('date').agg({
+        'trip_count': 'sum'
+    }).reset_index()
+    daily_aggregated.columns = ['date', 'daily_trips']
+    daily_aggregated['date'] = pd.to_datetime(daily_aggregated['date'])
+    
+    # Add temperature data
+    np.random.seed(42)
+    daily_aggregated['month'] = daily_aggregated['date'].dt.month
+    monthly_temps = {1: 32, 2: 35, 3: 42, 4: 53, 5: 63, 6: 72, 
+                     7: 77, 8: 76, 9: 68, 10: 57, 11: 48, 12: 38}
+    daily_aggregated['temperature'] = daily_aggregated['month'].map(monthly_temps) + np.random.normal(0, 5, len(daily_aggregated))
+    
+    return df, daily_aggregated
 
 # Load the data
-df, daily_data = load_dashboard_data()
+with st.spinner('Loading dashboard data...'):
+    df, daily_data = load_dashboard_data()
 
 ###############################################################
 # INTRODUCTION PAGE
@@ -108,15 +170,16 @@ if page == "Introduction":
     - **Recommendations**: Strategic insights based on comprehensive analysis
     """)
     
-    st.markdown("---")
-    st.markdown(" *Use the dropdown menu on the left to navigate through different aspects of the analysis*")
-    
-    # Display data metrics (same as original sidebar)
+    # Display data metrics in sidebar - SAME AS ORIGINAL
     if df is not None:
-        st.sidebar.header("Data Overview")
+        st.sidebar.header(" Data Overview")
         st.sidebar.metric("Total Stations", df['start_station_name'].nunique())
         st.sidebar.metric("Date Range", f"{df['started_at'].min().date()} to {df['started_at'].max().date()}")
-        st.sidebar.metric("Total Trips", f"{df['trip_count'].sum():,}")
+        total_trips = df['trip_count'].sum() if 'trip_count' in df.columns else len(df)
+        st.sidebar.metric("Total Trips", f"{total_trips:,}")
+    
+    st.markdown("---")
+    st.markdown(" *Use the dropdown menu on the left to navigate through different aspects of the analysis*")
 
 ###############################################################
 # WEATHER IMPACT ANALYSIS PAGE
@@ -127,22 +190,20 @@ elif page == "Weather Impact Analysis":
     st.markdown("### Daily Bike Trips vs Temperature Correlation")
     
     if daily_data is not None:
-        # Create dual-axis line chart (SAME STRUCTURE AS ORIGINAL)
+        # Create dual-axis line chart
         fig_line = make_subplots(specs=[[{"secondary_y": True}]])
         
-        # Daily trips trace (same as original)
         fig_line.add_trace(
             go.Scatter(
                 x=daily_data['date'],
                 y=daily_data['daily_trips'],
                 name='Daily Bike Trips',
-                line=dict(color='#1f77b4', width=3),
+                line=dict(color='#1f77b4', width=2),
                 hovertemplate='<b>Date: %{x}</b><br>Trips: %{y:,}<extra></extra>'
             ),
             secondary_y=False
         )
         
-        # Temperature trace (same as original)
         fig_line.add_trace(
             go.Scatter(
                 x=daily_data['date'],
@@ -154,12 +215,10 @@ elif page == "Weather Impact Analysis":
             secondary_y=True
         )
         
-        # Layout (same as original)
         fig_line.update_layout(
             title='Daily Bike Trips vs Temperature in NYC',
             height=500,
-            template='plotly_white',
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            template='plotly_white'
         )
         
         fig_line.update_yaxes(title_text="Daily Trips", secondary_y=False)
@@ -167,35 +226,20 @@ elif page == "Weather Impact Analysis":
         
         st.plotly_chart(fig_line, use_container_width=True)
         
-        # Interpretation section (REQUIRED)
+        # Interpretation
         st.markdown("""
         ###  Interpretation of Findings
         
-        **There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of bike trips taken daily.** 
+        **There is an obvious correlation between temperature fluctuations and bike usage patterns.** 
+        As temperatures rise during spring and summer months, daily bike trips increase significantly, 
+        while colder winter months show substantially reduced ridership.
         
-        As temperatures plunge during winter months, so does bike usage, with a noticeable decline starting in November and reaching the lowest points in January and February. Conversely, as temperatures rise in spring and summer, bike usage increases significantly, peaking during the warmest months.
-        
-        **This insight indicates that the shortage problem may be prevalent merely in the warmer months, approximately from May to October,** when demand surges due to favorable weather conditions. The seasonal pattern suggests opportunities for strategic operational scaling.
+        **This insight indicates that bike availability challenges are concentrated in warmer months** 
+        (approximately May through October) when demand peaks. Understanding these seasonal patterns 
+        allows for strategic operational scaling to address availability issues during high-demand periods.
         """)
-        
-        # Seasonal metrics (same approach as original)
-        col1, col2, col3, col4 = st.columns(4)
-        
-        # Calculate approximate seasonal averages based on the data
-        if daily_data is not None:
-            daily_data['season'] = daily_data['date'].dt.month.apply(lambda x: 'Winter' if x in [12,1,2] else 
-                                                                   'Spring' if x in [3,4,5] else 
-                                                                   'Summer' if x in [6,7,8] else 'Fall')
-            seasonal_avg = daily_data.groupby('season')['daily_trips'].mean()
-            
-            with col1:
-                st.metric("Winter Average", f"{seasonal_avg.get('Winter', 0):,.0f}")
-            with col2:
-                st.metric("Spring Average", f"{seasonal_avg.get('Spring', 0):,.0f}")
-            with col3:
-                st.metric("Summer Average", f"{seasonal_avg.get('Summer', 0):,.0f}")
-            with col4:
-                st.metric("Fall Average", f"{seasonal_avg.get('Fall', 0):,.0f}")
+    else:
+        st.error("Unable to load data for weather analysis")
 
 ###############################################################
 # MOST POPULAR STATIONS PAGE
@@ -206,64 +250,60 @@ elif page == "Most Popular Stations":
     st.markdown("### Top 20 Most Popular Stations Analysis")
     
     if df is not None:
-        # Season filter in sidebar (NEW FILTER FUNCTIONALITY)
+        # Season filter
         st.sidebar.subheader("Season Filter")
-        season_filter = st.sidebar.multiselect(
-            label='Select the season', 
-            options=df['season'].unique(),
-            default=df['season'].unique()
-        )
+        if 'season' in df.columns:
+            season_filter = st.sidebar.multiselect(
+                'Select seasons:',
+                options=df['season'].unique(),
+                default=df['season'].unique()
+            )
+            df_filtered = df[df['season'].isin(season_filter)]
+        else:
+            df_filtered = df
+            season_filter = ["All Seasons"]
         
-        # Filter data based on selection
-        df_filtered = df[df['season'].isin(season_filter)]
-        
-        # Total rides metric connected to filter
-        total_rides = float(df_filtered['trip_count'].sum())
-        st.metric(label='Total Bike Rides', value=f"{total_rides:,}")
-        
-        # Top stations analysis (SAME AS ORIGINAL)
+        # Calculate metrics
         station_trips = df_filtered.groupby('start_station_name', as_index=False)['trip_count'].sum()
         top_20_stations = station_trips.nlargest(20, 'trip_count')
         
-        # Create bar chart (SAME AS ORIGINAL)
+        # Display metrics
+        total_rides = top_20_stations['trip_count'].sum()
+        st.metric("Total Rides in Top 20 Stations", f"{total_rides:,}")
+        
+        # Create bar chart
         fig_bar = go.Figure(go.Bar(
             x=top_20_stations['start_station_name'],
             y=top_20_stations['trip_count'],
-            marker={
-                'color': top_20_stations['trip_count'], 
-                'colorscale': 'Blues',
-            }
+            marker_color=top_20_stations['trip_count'],
+            marker_colorscale='Blues'
         ))
         
-        # Customize layout (SAME AS ORIGINAL)
         fig_bar.update_layout(
-            title=f"Top 20 Most Popular Bike Stations in NYC ({', '.join(season_filter)})",
+            title=f"Top 20 Most Popular Bike Stations ({', '.join(season_filter)})",
             xaxis_title='Start Stations',
             yaxis_title='Number of Trips',
-            width=1000,
-            height=600,
-            xaxis_tickangle=-45,
-            template='plotly_white'
+            height=500,
+            xaxis_tickangle=-45
         )
         
         st.plotly_chart(fig_bar, use_container_width=True)
         
-        # Interpretation section (REQUIRED)
+        # Interpretation
         st.markdown("""
         ###  Interpretation of Findings
         
-        **From the bar chart it is clear that there are some start stations that are more popular than others** - in the top positions we can see stations like W 21 St & 6 Ave, West St & Chambers St, and Broadway & W 58 St consistently attracting high usage.
+        **Clear station preferences emerge** with certain locations consistently attracting higher usage. 
+        Stations in high-traffic areas like W 21 St & 6 Ave and West St & Chambers St dominate the top positions.
         
-        **There is a significant jump between the highest and lowest bars of the plot** indicating clear user preferences for certain stations over others. This concentration of demand at specific locations likely contributes to the availability challenges experienced by customers.
+        **Significant variation between highest and lowest bars** indicates concentrated demand at specific 
+        locations, contributing to availability challenges during peak periods.
         
-        **This is a finding that we could cross reference with the interactive map** that you can access through the sidebar select box to understand whether these popular start stations also account for the most commonly taken trips throughout the city.
+        **These findings can be cross-referenced with the interactive map** to understand route patterns 
+        and identify opportunities for strategic resource allocation.
         """)
-        
-        # Display top stations summary (same as original approach)
-        st.subheader("Top 5 Stations Summary")
-        top_5 = top_20_stations.head(5).copy()
-        top_5['trip_count'] = top_5['trip_count'].apply(lambda x: f"{x:,}")
-        st.table(top_5)
+    else:
+        st.error("Unable to load data for station analysis")
 
 ###############################################################
 # INTERACTIVE MAP PAGE
@@ -271,9 +311,9 @@ elif page == "Most Popular Stations":
 
 elif page == "Interactive Map with Aggregated Bike Trips":
     st.title(" Interactive Map with Aggregated Bike Trips")
-    st.markdown("### Geographic Distribution of Bike Trips")
+    st.markdown("### Geographic Distribution Analysis")
     
-    # Map visualization (SAME AS ORIGINAL)
+    # Map loading - SAME AS ORIGINAL
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         map_paths = [
@@ -291,32 +331,32 @@ elif page == "Interactive Map with Aggregated Bike Trips":
         
         if html_content:
             st.components.v1.html(html_content, height=600)
+            st.success("✓ Interactive map loaded successfully")
         else:
             st.info("""
             **Interactive Map Visualization**
             
-            To view the interactive map, ensure the map file is available in one of these locations:
-            - `nyc_bike_trips_aggregated.html` (same directory)
-            - `maps/nyc_bike_trips_aggregated.html`
-            - `../maps/nyc_bike_trips_aggregated.html`
-            
-            The map displays aggregated bike trips across NYC, showing spatial patterns and high-traffic corridors.
+            Map file not found in expected locations. The map would display:
+            - Aggregated bike trips across NYC
+            - Spatial patterns and high-traffic corridors
+            - Geographic distribution of station usage
             """)
-        
+            
     except Exception as e:
-        st.info("Map visualization not available. The dashboard will still function with the analytical charts above.")
+        st.info("Map visualization not available in current deployment")
     
-    # Interpretation section (REQUIRED)
+    # Interpretation
     st.markdown("""
     ###  Interpretation of Findings
     
-    **Using the filter on the left hand side of the map** we can check whether the most popular start stations also appear in the most popular trips.
+    **Spatial analysis reveals concentrated trip activity** in Manhattan's core business and tourist districts. 
+    High-frequency routes connect key destinations throughout the city.
     
-    **The most popular start stations are**: W 21 St & 6 Ave, West St & Chambers St, and Broadway & W 58 St. 
+    **The most popular start stations** identified in our analysis (W 21 St & 6 Ave, West St & Chambers St, etc.) 
+    serve as major hubs within these high-traffic corridors.
     
-    **While having the aggregated bike trips filter enabled**, we can see that even though certain stations are popular start points, they don't necessarily account for all the most commonly taken trips. The spatial analysis reveals that high-frequency routes connect various key destinations throughout the city.
-    
-    **The most common routes** are predominantly located in high-traffic areas including Midtown Manhattan, Downtown financial districts, and popular tourist destinations, with particular concentration along major corridors and transportation hubs.
+    **Geographic patterns inform expansion opportunities** by identifying underserved areas and optimal 
+    locations for new station deployment to balance demand distribution.
     """)
 
 ###############################################################
@@ -325,71 +365,60 @@ elif page == "Interactive Map with Aggregated Bike Trips":
 
 else:
     st.title(" Recommendations and Conclusions")
-    st.markdown("### Strategic Insights and Actionable Recommendations")
+    st.markdown("### Strategic Insights for NYC Citi Bike Operations")
     
     st.markdown("""
     ## Executive Summary
     
-    Our comprehensive analysis of NYC Citi Bike usage patterns, seasonal trends, and geographic distribution 
-    reveals key insights for addressing bike availability challenges and supporting strategic growth initiatives.
+    Based on comprehensive analysis of bike usage patterns, seasonal trends, and geographic distribution, 
+    we recommend the following strategic initiatives to address availability challenges.
     """)
     
     st.markdown("""
     ##  Key Recommendations
     
     ### 1. Seasonal Operational Scaling
-    **Implement dynamic resource allocation based on demand patterns:**
-    - Scale back bike deployment by **40-50% between November and April**
-    - Maintain full fleet availability during peak months (**May through October**)
-    - Implement gradual transition periods in spring and fall
+    **Implement dynamic resource allocation:**
+    - Scale back operations by **40-50% between November and April**
+    - Maintain full deployment during peak months (**May-October**)
+    - Use gradual transitions in spring and fall
     
-    ### 2. High-Demand Station Optimization
-    **Focus resources on consistently popular locations:**
-    - Enhance maintenance schedules for the top 20 stations identified in our analysis
-    - Implement predictive bike redistribution to high-demand areas
-    - Deploy additional operational staff during peak usage hours
+    ### 2. High-Demand Station Optimization  
+    **Focus resources on top-performing locations:**
+    - Enhance maintenance at identified top 20 stations
+    - Implement predictive redistribution to high-demand areas
+    - Deploy additional staff during peak hours
     
     ### 3. Strategic Geographic Expansion
-    **Target high-potential areas for station deployment:**
-    - Use geographic heat maps to identify underserved corridors
-    - Focus expansion along high-traffic routes identified in the spatial analysis
-    - Consider areas with growing residential and commercial development
+    **Target high-potential areas:**
+    - Use spatial analysis to identify underserved corridors
+    - Focus on areas with consistent demand patterns
+    - Consider waterfront and high-traffic locations
     
     ### 4. Data-Driven Operations
-    **Leverage analytics for operational efficiency:**
-    - Develop predictive algorithms for bike availability forecasting
-    - Implement dynamic pricing strategies to balance demand
-    - Enhance real-time monitoring and redistribution systems
+    **Leverage analytics for efficiency:**
+    - Develop predictive availability forecasting
+    - Implement dynamic pricing strategies
+    - Enhance real-time monitoring systems
     """)
     
     st.markdown("""
-    ## Expected Outcomes
+    ##  Addressing Stakeholder Questions
     
-    - **Significant reduction** in bike availability complaints during peak seasons
-    - **Improved operational efficiency** through seasonal resource allocation
-    - **Enhanced customer satisfaction** through better bike availability
-    - **Strategic growth** through data-informed expansion decisions
-    """)
+    **How much to scale back November-April?**
+    > 40-50% reduction, with deepest cuts in January-February based on temperature-usage correlation.
     
-    # Answer stakeholder questions proactively
-    st.markdown("""
-    ##  Addressing Key Stakeholder Questions
+    **Determining waterway station expansion?**
+    > Use geographic heat maps and trip density patterns to identify optimal locations along high-demand corridors.
     
-    **How much would you recommend scaling bikes back between November and April?**
-    > Based on our temperature and usage correlation analysis, we recommend scaling back operations by 40-50% during the November-April period, with the most significant reductions in January and February when demand is lowest.
-    
-    **How could you determine how many more stations to add along the water?**
-    > Using our geographic analysis and trip density patterns, we would identify high-demand corridors near waterways, analyze current station coverage gaps, and use spatial clustering to determine optimal locations for new station deployment.
-    
-    **What are some ideas for ensuring bikes are always stocked at the most popular stations?**
-    > Implement predictive redistribution algorithms, dynamic pricing incentives for returning bikes to high-demand areas, enhanced maintenance schedules, and real-time monitoring systems with automated alerts for low inventory situations.
+    **Ensuring bikes at popular stations?**
+    > Predictive redistribution, dynamic pricing incentives, enhanced maintenance, and real-time inventory monitoring.
     """)
 
 ###############################################################
-# FOOTER (Same as original)
+# FOOTER
 ###############################################################
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**NYC Citi Bike Analysis**")
 st.sidebar.markdown("Data Source: NYC Citi Bike 2021-2022")
-st.sidebar.markdown("Analysis Period: Jan 2021 - Dec 2022")
