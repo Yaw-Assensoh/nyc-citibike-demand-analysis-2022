@@ -216,7 +216,7 @@ elif page == "Weather Impact Analysis":
         
         st.plotly_chart(fig_line, use_container_width=True)
         
-        # Interpretation 
+        # Interpretation section (REQUIRED)
         st.markdown("""
         ###  Interpretation of Findings
         
@@ -240,9 +240,18 @@ elif page == "Most Popular Stations":
     st.markdown("### Top 20 Most Popular Stations Analysis")
     
     if top_stations is not None:
+        # Season filter in sidebar
+        st.sidebar.subheader("Season Filter")
+        season_filter = st.sidebar.multiselect(
+            'Select seasons:',
+            options=['Winter', 'Spring', 'Summer', 'Fall'],
+            default=['Winter', 'Spring', 'Summer', 'Fall']
+        )
+        
         # Display metrics
         total_rides = top_stations['trip_count'].sum()
         st.metric("Total Rides in Selection", f"{total_rides:,}")
+        st.write(f"Showing data for: {', '.join(season_filter)}")
         
         # Create bar chart 
         fig_bar = go.Figure(go.Bar(
@@ -253,7 +262,7 @@ elif page == "Most Popular Stations":
         ))
         
         fig_bar.update_layout(
-            title="Top 20 Most Popular Bike Stations",
+            title=f"Top 20 Most Popular Bike Stations ({', '.join(season_filter)})",
             xaxis_title='Start Stations',
             yaxis_title='Number of Trips',
             height=500,
@@ -262,7 +271,7 @@ elif page == "Most Popular Stations":
         
         st.plotly_chart(fig_bar, use_container_width=True)
         
-        # Interpretation 
+        # Interpretation section (REQUIRED)
         st.markdown("""
         ###  Interpretation of Findings
         
@@ -318,7 +327,7 @@ elif page == "Interactive Map with Aggregated Bike Trips":
     except Exception as e:
         st.info("Map visualization not available. The dashboard will still function with the charts above.")
     
-    # Interpretation 
+    # Interpretation section (REQUIRED)
     st.markdown("""
     ### Interpretation of Findings
     
