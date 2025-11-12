@@ -427,68 +427,66 @@ elif page == "Most Popular Stations":
 # WEATHER IMPACT ANALYSIS PAGE
 ###############################################################
 
+elif page == "Weather Impact Analysis":
+    st.title(" Weather Impact Analysis")
+    st.markdown("### Daily Bike Trips vs Temperature Correlation")
+    
+    if daily_data is not None:
+        # Create dual-axis line chart 
+        fig_line = make_subplots(specs=[[{"secondary_y": True}]])
+        
+        # Daily trips trace 
+        fig_line.add_trace(
+            go.Scatter(
+                x=daily_data['date'],
+                y=daily_data['daily_trips'],
+                name='Daily Bike Trips',
+                line=dict(color='#1f77b4', width=3),
+                hovertemplate='<b>Date: %{x}</b><br>Trips: %{y:,}<extra></extra>'
+            ),
+            secondary_y=False
+        )
+        
+        # Temperature trace 
+        fig_line.add_trace(
+            go.Scatter(
+                x=daily_data['date'],
+                y=daily_data['temperature'],
+                name='Average Temperature (°F)',
+                line=dict(color='#ff7f0e', width=2),
+                hovertemplate='<b>Date: %{x}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
+            ),
+            secondary_y=True
+        )
+        
+        # Layout 
+        fig_line.update_layout(
+            title='Daily Bike Trips vs Temperature in NYC',
+            height=500,
+            template='plotly_white',
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
+        
+        fig_line.update_yaxes(title_text="Daily Trips", secondary_y=False)
+        fig_line.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
+        
+        st.plotly_chart(fig_line, use_container_width=True)
+        
+        # Interpretation section (REQUIRED)
+        st.markdown("""
+        ###  Interpretation of Findings
+        
+        **There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of bike trips taken daily.** 
+        
+        As temperatures plunge during winter months, so does bike usage, with a noticeable decline starting in November and reaching the lowest points in January and February. 
+        Conversely, as temperatures rise in spring and summer, bike usage increases significantly, peaking during the warmest months.
+        
+        **This insight indicates that the shortage problem may be prevalent merely in the warmer months, approximately from May to October,** 
+        when demand surges due to favorable weather conditions. The seasonal pattern suggests opportunities for strategic operational scaling.
+        """)
+    else:
+        st.error("Unable to load data for weather analysis")
 
-
-elif page == "Trend Analysis":
-    st.header("Usage Trends & Seasonality")
-    
-    st.subheader("Daily Trips vs Temperature")
-    st.markdown("Analyze seasonal patterns and weather impact on bike usage.")
-    
-    fig_line = make_subplots(specs=[[{"secondary_y": True}]])
-    
-    # Daily trips trace
-    fig_line.add_trace(
-        go.Scatter(
-            x=daily_data['date'],
-            y=daily_data['daily_trips'],
-            name='Daily Bike Trips',
-            line=dict(color='#1f77b4', width=3),
-            hovertemplate='<b>Date: %{x}</b><br>Trips: %{y:,}<extra></extra>'
-        ),
-        secondary_y=False
-    )
-    
-    # Temperature trace
-    fig_line.add_trace(
-        go.Scatter(
-            x=daily_data['date'],
-            y=daily_data['temperature'],
-            name='Average Temperature (°F)',
-            line=dict(color='#ff7f0e', width=2),
-            hovertemplate='<b>Date: %{x}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
-        ),
-        secondary_y=True
-    )
-    
-    fig_line.update_layout(
-        height=500,
-        template='plotly_white',
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
-    
-    fig_line.update_yaxes(title_text="Daily Trips", secondary_y=False)
-    fig_line.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
-    
-    st.plotly_chart(fig_line, use_container_width=True)
-    
-    # Monthly aggregation
-    st.subheader("Monthly Trends")
-    daily_data['month'] = daily_data['date'].dt.to_period('M')
-    monthly_data = daily_data.groupby('month').agg({
-        'daily_trips': 'mean',
-        'temperature': 'mean'
-    }).reset_index()
-    monthly_data['month'] = monthly_data['month'].astype(str)
-    
-    fig_monthly = go.Figure()
-    fig_monthly.add_trace(go.Bar(
-        x=monthly_data['month'],
-        y=monthly_data['daily_trips'],
-        name='Average Monthly Trips'
-    ))
-    fig_monthly.update_layout(height=400)
-    st.plotly_chart(fig_monthly, use_container_width=True)
     
     st.markdown("There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of " \
     "bike trips taken daily. As temperatures plunge, so does bike usage. This insight indicates that the shortage problem may be prevalent " \
