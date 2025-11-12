@@ -212,7 +212,7 @@ if page == "Introduction":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS PAGE - SIMPLE DUAL AXIS LINE CHART
+# WEATHER IMPACT ANALYSIS PAGE - DUAL AXIS LINE CHART
 ###############################################################
 
 elif page == "Weather Impact Analysis":
@@ -245,50 +245,32 @@ elif page == "Weather Impact Analysis":
         correlation = display_data['daily_trips'].corr(display_data['temperature'])
         st.metric("Temperature Correlation", f"{correlation:.3f}")
     
-    # Main visualization - DUAL AXIS LINE CHART
+    # Main visualization - DUAL AXIS LINE CHART 
     st.markdown("---")
     st.markdown('<div class="section-header">Daily Trips vs Temperature</div>', unsafe_allow_html=True)
     
-    fig_line = make_subplots(specs=[[{"secondary_y": True}]])
-    
-    # Daily trips trace
-    fig_line.add_trace(
-        go.Scatter(
-            x=display_data['date'],
-            y=display_data['daily_trips'],
-            name='Daily Bike Trips',
-            line=dict(color='#1f77b4', width=3),
-            hovertemplate='<b>Date: %{x}</b><br>Trips: %{y:,}<extra></extra>'
-        ),
+    fig_2 = make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig_2.add_trace(
+        go.Scatter(x=display_data['date'], y=display_data['daily_trips'], name='Daily bike rides', marker={'color': 'blue'}),
         secondary_y=False
     )
-    
-    # Temperature trace
-    fig_line.add_trace(
-        go.Scatter(
-            x=display_data['date'],
-            y=display_data['temperature'],
-            name='Average Temperature (°F)',
-            line=dict(color='#ff7f0e', width=2),
-            hovertemplate='<b>Date: %{x}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
-        ),
+
+    fig_2.add_trace(
+        go.Scatter(x=display_data['date'], y=display_data['temperature'], name='Daily temperature', marker={'color': 'red'}),
         secondary_y=True
     )
-    
-    fig_line.update_layout(
-        height=500,
-        template='plotly_white',
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+
+    fig_2.update_layout(
+        title='Daily bike trips and temperatures in NYC',
+        height=400
     )
+
+    st.plotly_chart(fig_2, use_container_width=True)
     
-    fig_line.update_yaxes(title_text="Daily Trips", secondary_y=False)
-    fig_line.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
-    
-    st.plotly_chart(fig_line, use_container_width=True)
-    
-    # Insights Section
-    st.markdown("---")
-    st.markdown('<div class="section-header">Key Insights</div>', unsafe_allow_html=True)
+    st.markdown("There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency " \
+    "of bike trips taken daily. As temperatures plunge, so does bike usage. This insight indicates that the shortage problem may be prevalent " \
+    "merely in the warmer months, approximately from May to October.")
     
     st.markdown("""
     **Temperature Impact:**
