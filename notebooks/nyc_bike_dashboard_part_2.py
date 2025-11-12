@@ -487,6 +487,7 @@ elif page == "Weather Impact Analysis":
     else:
         st.error("Unable to load data for weather analysis")
 
+
     
     st.markdown("There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of " \
     "bike trips taken daily. As temperatures plunge, so does bike usage. This insight indicates that the shortage problem may be prevalent " \
