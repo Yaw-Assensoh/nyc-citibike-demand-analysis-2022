@@ -1,6 +1,5 @@
 ###############################################################
 # NYC Citi Bike Strategy Dashboard - Part 2
-# Clean and Stable Version
 ###############################################################
 
 import streamlit as st
@@ -213,7 +212,7 @@ if page == "Introduction":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS PAGE
+# WEATHER IMPACT ANALYSIS PAGE - IMPROVED LINE CHART
 ###############################################################
 
 elif page == "Weather Impact Analysis":
@@ -246,30 +245,34 @@ elif page == "Weather Impact Analysis":
         correlation = display_data['daily_trips'].corr(display_data['temperature'])
         st.metric("Temperature Correlation", f"{correlation:.3f}")
     
-    # Main visualization
+    # Main visualization - IMPROVED LINE CHART
     st.markdown("---")
     st.markdown('<div class="section-header">Daily Bike Trips vs Temperature</div>', unsafe_allow_html=True)
     
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    # Bike trips (primary axis)
+    # Bike trips (primary axis) - IMPROVED STYLING
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['daily_trips'],
             name='Daily Bike Trips',
-            line=dict(color='#1f77b4', width=3)
+            line=dict(color='#1f77b4', width=3, shape='spline'),
+            marker=dict(size=4, color='#1f77b4'),
+            fill='tozeroy',
+            fillcolor='rgba(31, 119, 180, 0.1)'
         ),
         secondary_y=False
     )
     
-    # Temperature (secondary axis)
+    # Temperature (secondary axis) - IMPROVED STYLING
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['temperature'],
             name='Temperature (°F)',
-            line=dict(color='#ff7f0e', width=3)
+            line=dict(color='#ff7f0e', width=3, shape='spline'),
+            marker=dict(size=4, color='#ff7f0e')
         ),
         secondary_y=True
     )
@@ -277,7 +280,15 @@ elif page == "Weather Impact Analysis":
     fig.update_layout(
         title="Daily Bike Trips and Temperature Over Time",
         height=500,
-        template='plotly_white'
+        template='plotly_white',
+        hovermode='x unified',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
     
     fig.update_yaxes(title_text="Daily Bike Trips", secondary_y=False)
@@ -304,7 +315,7 @@ elif page == "Weather Impact Analysis":
     """)
 
 ###############################################################
-# MOST POPULAR STATIONS PAGE
+# MOST POPULAR STATIONS PAGE - IMPROVED BAR CHART
 ###############################################################
 
 elif page == "Most Popular Stations":
@@ -335,14 +346,20 @@ elif page == "Most Popular Stations":
         top_station = top_stations.iloc[0]
         st.metric("Top Station Volume", f"{top_station['trip_count']:,}")
     
-    # Main Visualization - Simple bar chart
+    # Main Visualization - IMPROVED BAR CHART
     st.markdown("---")
     st.markdown('<div class="section-header">Top 20 Stations by Usage</div>', unsafe_allow_html=True)
     
     fig = go.Figure(go.Bar(
         x=top_stations['start_station_name'],
         y=top_stations['trip_count'],
-        marker_color='#1f77b4'
+        marker=dict(
+            color=top_stations['trip_count'],
+            colorscale='Blues',
+            colorbar=dict(title="Trip Count"),
+            line=dict(color='#1f77b4', width=1)
+        ),
+        hovertemplate='<b>%{x}</b><br>Trips: %{y:,}<extra></extra>'
     ))
     
     fig.update_layout(
@@ -350,7 +367,8 @@ elif page == "Most Popular Stations":
         xaxis_title='Start Stations',
         yaxis_title='Number of Trips',
         height=500,
-        xaxis_tickangle=-45
+        xaxis_tickangle=-45,
+        template='plotly_white'
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -374,7 +392,7 @@ elif page == "Most Popular Stations":
     """)
 
 ###############################################################
-# INTERACTIVE MAP ANALYSIS PAGE
+# INTERACTIVE MAP ANALYSIS PAGE - FIXED MAP DISPLAY
 ###############################################################
 
 elif page == "Interactive Map Analysis":
@@ -382,31 +400,50 @@ elif page == "Interactive Map Analysis":
     st.markdown('<h1 class="main-header">Spatial Analysis</h1>', unsafe_allow_html=True)
     st.markdown("### Geographic Distribution and Hotspot Identification")
     
-    # Try to load the map
+    # Map section - FIXED to only show map, no graphs
+    st.markdown("---")
+    st.markdown('<div class="section-header">Interactive Station Map</div>', unsafe_allow_html=True)
+    
+    # Only try to load and display the HTML map file
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         map_paths = [
             os.path.join(base_dir, "nyc_bike_trips_aggregated.html"),
             os.path.join(base_dir, "maps/nyc_bike_trips_aggregated.html"),
             os.path.join(base_dir, "../maps/nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "notebooks/nyc_bike_trips_aggregated.html"),
         ]
         
         html_content = None
+        map_found = False
+        
         for map_path in map_paths:
             if os.path.exists(map_path):
                 with open(map_path, 'r', encoding='utf-8') as f:
                     html_content = f.read()
+                st.success(f"Map loaded successfully from: {os.path.basename(os.path.dirname(map_path))}")
+                map_found = True
                 break
         
-        if html_content:
-            st.components.v1.html(html_content, height=600)
+        if html_content and map_found:
+            # Display only the map, no other graphs
+            st.components.v1.html(html_content, height=600, scrolling=False)
         else:
-            st.info("Map visualization not available. The dashboard will still function with the charts above.")
+            st.info("""
+            **Map Visualization**
+            
+            The interactive map file is not currently available in the expected locations. 
+            When available, it will display here showing geographic distribution of bike trips.
+            """)
         
     except Exception as e:
-        st.info("Map visualization not available. The dashboard will still function with the charts above.")
+        st.info("""
+        **Interactive Map**
+        
+        The map visualization will appear here when the HTML file is available in the repository.
+        """)
     
-    # Spatial Insights
+    # Spatial Insights - Keep this section but remove any graphs
     st.markdown("---")
     st.markdown('<div class="section-header">Spatial Analysis Insights</div>', unsafe_allow_html=True)
     
