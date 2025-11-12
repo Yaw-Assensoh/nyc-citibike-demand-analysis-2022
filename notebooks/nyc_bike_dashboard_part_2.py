@@ -212,102 +212,96 @@ if page == "Introduction":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS PAGE 
+# WEATHER IMPACT ANALYSIS PAGE - SIMPLE DUAL AXIS LINE CHART
 ###############################################################
 
 elif page == "Weather Impact Analysis":
     
     st.markdown('<h1 class="main-header">Weather Impact Analysis</h1>', unsafe_allow_html=True)
-    st.markdown("### How Temperature Affects Bike Usage")
+    st.markdown("### Understanding Temperature and Seasonal Effects on Bike Usage")
     
-    #  explanation 
-    st.markdown("""
-    **Key Finding**: Bike usage increases significantly when temperatures rise above 60°F and decreases when temperatures drop below 45°F.
-    """)
+    # Display current filter status
+    if 'selected_seasons' in locals() and selected_seasons:
+        season_text = f"Showing data for: {', '.join(selected_seasons)}"
+        display_data = filtered_daily_data
+    else:
+        season_text = "Showing data for all seasons"
+        display_data = daily_data
     
-    #  seasonal summary
-    st.markdown("---")
-    st.markdown("### Seasonal Usage Patterns")
+    st.info(season_text)
     
-    # Calculate seasonal averages
-    seasonal_data = daily_data.groupby('season').agg({
-        'daily_trips': 'mean',
-        'temperature': 'mean'
-    }).round(0)
-    
-    col1, col2, col3, col4 = st.columns(4)
+    # KPI Metrics
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        winter_trips = seasonal_data.loc['Winter', 'daily_trips']
-        st.metric("Winter Usage", f"{winter_trips:,.0f} trips/day", "-60% vs Summer")
+        avg_trips = display_data['daily_trips'].mean()
+        st.metric("Average Daily Trips", f"{avg_trips:,.0f}")
     
     with col2:
-        spring_trips = seasonal_data.loc['Spring', 'daily_trips']
-        st.metric("Spring Usage", f"{spring_trips:,.0f} trips/day", "+65% vs Winter")
+        avg_temp = display_data['temperature'].mean()
+        st.metric("Average Temperature", f"{avg_temp:.1f}°F")
     
     with col3:
-        summer_trips = seasonal_data.loc['Summer', 'daily_trips']
-        st.metric("Summer Usage", f"{summer_trips:,.0f} trips/day", "Peak Season")
+        correlation = display_data['daily_trips'].corr(display_data['temperature'])
+        st.metric("Temperature Correlation", f"{correlation:.3f}")
     
-    with col4:
-        fall_trips = seasonal_data.loc['Fall', 'daily_trips']
-        st.metric("Fall Usage", f"{fall_trips:,.0f} trips/day", "-20% vs Summer")
-    
-    #  bar chart comparing seasons
+    # Main visualization - DUAL AXIS LINE CHART
     st.markdown("---")
-    st.markdown("### Bike Usage by Season")
+    st.markdown('<div class="section-header">Daily Trips vs Temperature</div>', unsafe_allow_html=True)
     
-    fig_bar = go.Figure()
+    fig_line = make_subplots(specs=[[{"secondary_y": True}]])
     
-    fig_bar.add_trace(go.Bar(
-        x=seasonal_data.index,
-        y=seasonal_data['daily_trips'],
-        marker_color=['#1f77b4', '#2ca02c', '#ff7f0e', '#d62728'],
-        text=seasonal_data['daily_trips'].apply(lambda x: f'{x:,.0f}'),
-        textposition='auto',
-    ))
-    
-    fig_bar.update_layout(
-        title="Average Daily Bike Trips by Season",
-        yaxis_title="Daily Trips",
-        height=400,
-        showlegend=False
+    # Daily trips trace
+    fig_line.add_trace(
+        go.Scatter(
+            x=display_data['date'],
+            y=display_data['daily_trips'],
+            name='Daily Bike Trips',
+            line=dict(color='#1f77b4', width=3),
+            hovertemplate='<b>Date: %{x}</b><br>Trips: %{y:,}<extra></extra>'
+        ),
+        secondary_y=False
     )
     
-    st.plotly_chart(fig_bar, use_container_width=True)
+    # Temperature trace
+    fig_line.add_trace(
+        go.Scatter(
+            x=display_data['date'],
+            y=display_data['temperature'],
+            name='Average Temperature (°F)',
+            line=dict(color='#ff7f0e', width=2),
+            hovertemplate='<b>Date: %{x}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
+        ),
+        secondary_y=True
+    )
     
-    #  temperature ranges explanation
+    fig_line.update_layout(
+        height=500,
+        template='plotly_white',
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    
+    fig_line.update_yaxes(title_text="Daily Trips", secondary_y=False)
+    fig_line.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
+    
+    st.plotly_chart(fig_line, use_container_width=True)
+    
+    # Insights Section
     st.markdown("---")
-    st.markdown("### Temperature Impact Summary")
+    st.markdown('<div class="section-header">Key Insights</div>', unsafe_allow_html=True)
     
     st.markdown("""
-    **When to Scale Operations:**
+    **Temperature Impact:**
+    - Strong positive correlation between temperature and bike usage
+    - Optimal temperature range: 65°F - 80°F for maximum ridership
+    - Significant usage drop below 45°F
+    - Summer peaks show 60-70% higher usage than winter lows
     
-     **Cold Months (Nov-Apr)**: Scale back 40-50%
-    - Average temperature: 35-55°F  
-    - Usage: 45,000 trips/day
-    - Recommendation: Reduce bike inventory
-    
-     **Warm Months (May-Oct)**: Full capacity needed
-    - Average temperature: 60-80°F
-    - Usage: 85,000 trips/day  
-    - Recommendation: Maintain 100% fleet
-    
-    **Why This Matters:**
-    - Bike shortages mainly occur in warm months
-    - Winter operations can be optimized for cost savings
-    - Seasonal planning prevents customer complaints
-    """)
-    
-    #  recommendation box
-    st.markdown("---")
-    st.markdown("### Key Recommendation")
-    
-    st.success("""
-    **Implement Seasonal Fleet Management:**
-    - Reduce bikes by 40-50% from November to April
-    - Maintain full fleet from May to October
-    - This matches supply with seasonal demand patterns
+    **Seasonal Patterns:**
+    - High season: May through October
+    - Shoulder seasons: April and November  
+    - Low season: December through March
+    - Weekend effect: 20% higher usage on weekends
     """)
 
 ###############################################################
