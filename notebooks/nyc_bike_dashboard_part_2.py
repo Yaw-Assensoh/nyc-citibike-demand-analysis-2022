@@ -212,7 +212,7 @@ if page == "Introduction":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS 
+# WEATHER IMPACT ANALYSIS PAGE - KEEPING YOUR ORIGINAL LINE CHART
 ###############################################################
 
 elif page == "Weather Impact Analysis":
@@ -245,13 +245,13 @@ elif page == "Weather Impact Analysis":
         correlation = display_data['daily_trips'].corr(display_data['temperature'])
         st.metric("Temperature Correlation", f"{correlation:.3f}")
     
-    # Main visualization 
+    # Main visualization - KEEPING YOUR ORIGINAL LINE CHART
     st.markdown("---")
     st.markdown('<div class="section-header">Daily Bike Trips vs Temperature</div>', unsafe_allow_html=True)
     
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    # Bike trips (primary axis) 
+    # Bike trips (primary axis) - YOUR ORIGINAL STYLING
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
@@ -262,7 +262,7 @@ elif page == "Weather Impact Analysis":
         secondary_y=False
     )
     
-    # Temperature (secondary axis) 
+    # Temperature (secondary axis) - YOUR ORIGINAL STYLING
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
@@ -303,7 +303,7 @@ elif page == "Weather Impact Analysis":
     """)
 
 ###############################################################
-# MOST POPULAR STATIONS PAGE 
+# MOST POPULAR STATIONS PAGE - IMPROVED BAR CHART ONLY
 ###############################################################
 
 elif page == "Most Popular Stations":
@@ -334,7 +334,7 @@ elif page == "Most Popular Stations":
         top_station = top_stations.iloc[0]
         st.metric("Top Station Volume", f"{top_station['trip_count']:,}")
     
-    # Main Visualization 
+    # Main Visualization - IMPROVED BAR CHART ONLY
     st.markdown("---")
     st.markdown('<div class="section-header">Top 20 Stations by Usage</div>', unsafe_allow_html=True)
     
@@ -378,7 +378,7 @@ elif page == "Most Popular Stations":
     """)
 
 ###############################################################
-# INTERACTIVE MAP ANALYSIS PAGE
+# INTERACTIVE MAP ANALYSIS PAGE - FIXED FOR NOTEBOOKS FOLDER
 ###############################################################
 
 elif page == "Interactive Map Analysis":
