@@ -424,7 +424,7 @@ elif page == "Most Popular Stations":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS PAGE
+# WEATHER IMPACT ANALYSIS PAGE - SIMPLE DUAL AXIS LINE CHART
 ###############################################################
 
 elif page == "Weather Impact Analysis":
@@ -457,121 +457,64 @@ elif page == "Weather Impact Analysis":
         correlation = display_data['daily_trips'].corr(display_data['temperature'])
         st.metric("Temperature Correlation", f"{correlation:.3f}")
     
-    # Main visualization
+    # Main visualization - SIMPLE DUAL AXIS LINE CHART (EXACTLY LIKE YOUR IMAGE)
     st.markdown("---")
-    st.markdown('<div class="section-header">Daily Bike Trips vs Temperature Over Time</div>', unsafe_allow_html=True)
+    st.markdown("### Daily Bike Trips vs Temperature in NYC")
     
-    # Create figure with secondary y-axis
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    # Daily trips trace - improved styling
+    # Daily trips trace - left axis
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['daily_trips'],
             name='Daily Bike Trips',
-            line=dict(color='#3366CC', width=3),
-            opacity=0.9,
-            hovertemplate='<b>%{x|%b %d, %Y}</b><br>Trips: %{y:,}<extra></extra>'
+            line=dict(color='blue', width=2)
         ),
         secondary_y=False
     )
     
-    # Temperature trace - improved styling
+    # Temperature trace - right axis  
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['temperature'],
             name='Temperature (°F)',
-            line=dict(color='#FF6633', width=2.5),
-            opacity=0.8,
-            hovertemplate='<b>%{x|%b %d, %Y}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
+            line=dict(color='red', width=2)
         ),
         secondary_y=True
     )
     
-    # Enhanced layout
     fig.update_layout(
         height=500,
-        template='plotly_white',
-        hovermode='x unified',
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="center",
-            x=0.5
-        ),
-        margin=dict(t=80, l=80, r=80, b=80),
-        font=dict(size=12)
+        title='Daily Bike Trips vs Temperature in NYC'
     )
     
-    # Enhanced axes
-    fig.update_yaxes(
-        title_text="<b>Daily Bike Trips</b>",
-        secondary_y=False,
-        title_font=dict(size=14),
-        gridcolor='lightgray',
-        gridwidth=0.5
-    )
-    
-    fig.update_yaxes(
-        title_text="<b>Temperature (°F)</b>",
-        secondary_y=True,
-        title_font=dict(size=14),
-        gridcolor='lightgray',
-        gridwidth=0.25
-    )
-    
-    fig.update_xaxes(
-        title_text="<b>Date</b>",
-        title_font=dict(size=14),
-        gridcolor='lightgray',
-        gridwidth=0.5
-    )
+    fig.update_yaxes(title_text="Daily Bike Trips", secondary_y=False)
+    fig.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
     
     st.plotly_chart(fig, use_container_width=True)
     
-    # Insights Section - Organized in columns
+    # Insights Section
     st.markdown("---")
-    st.markdown('<div class="section-header">Key Insights</div>', unsafe_allow_html=True)
+    st.markdown("### Key Insights")
     
-    col_insight1, col_insight2 = st.columns(2)
+    st.markdown("""
+    **Temperature Impact:**
+    - Strong positive correlation between temperature and bike usage
+    - Optimal temperature range: 65°F - 80°F for maximum ridership
+    - Significant usage drop below 45°F
+    - Summer peaks show 60-70% higher usage than winter lows
+    """)
     
-    with col_insight1:
-        st.markdown("""
-        ** Temperature Impact:**
-        - Strong positive correlation between temperature and bike usage
-        - Optimal temperature range: 65°F - 80°F for maximum ridership
-        - Significant usage drop below 45°F
-        - Summer peaks show 60-70% higher usage than winter lows
-        """)
-        
-        st.markdown("""
-        ** Seasonal Patterns:**
-        - High season: May through October
-        - Shoulder seasons: April and November  
-        - Low season: December through March
-        - Weekend effect: 20% higher usage on weekends
-        """)
+    st.markdown("""
+    **Seasonal Patterns:**
+    - High season: May through October
+    - Shoulder seasons: April and November  
+    - Low season: December through March
+    - Weekend effect: 20% higher usage on weekends
+    """)
     
-    with col_insight2:
-        st.markdown("""
-        ** Infrastructure Patterns:**
-        - Broadway corridor shows highest station density
-        - Waterfront areas emerging as popular routes
-        - Clear concentration in central business districts
-        - Tourist zones consistently high usage
-        """)
-        
-        st.markdown("""
-        ** Expansion Opportunities:**
-        - East River crossings to Brooklyn/Queens
-        - Residential neighborhood integration
-        - Subway station proximity optimization
-        - Waterfront recreational routes
-        """)
-
 ###############################################################
 # RECOMMENDATIONS PAGE
 ###############################################################
