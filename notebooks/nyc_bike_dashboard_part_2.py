@@ -212,7 +212,7 @@ if page == "Introduction":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS PAGE - KEEPING YOUR ORIGINAL LINE CHART
+# WEATHER IMPACT ANALYSIS PAGE - WITH IMPROVED TEMPERATURE CHART
 ###############################################################
 
 elif page == "Weather Impact Analysis":
@@ -245,44 +245,93 @@ elif page == "Weather Impact Analysis":
         correlation = display_data['daily_trips'].corr(display_data['temperature'])
         st.metric("Temperature Correlation", f"{correlation:.3f}")
     
-    # Main visualization - KEEPING YOUR ORIGINAL LINE CHART
+    # Main visualization - USING YOUR IMPROVED LINE CHART STYLING
     st.markdown("---")
     st.markdown('<div class="section-header">Daily Bike Trips vs Temperature</div>', unsafe_allow_html=True)
     
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    # Bike trips (primary axis) - YOUR ORIGINAL STYLING
+    # Daily trips trace - YOUR IMPROVED STYLING
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['daily_trips'],
             name='Daily Bike Trips',
-            line=dict(color='#1f77b4', width=3)
+            line=dict(color='#1f77b4', width=2.5),
+            hovertemplate='<b>Date: %{x|%b %d, %Y}</b><br>Trips: %{y:,}<extra></extra>'
         ),
         secondary_y=False
     )
     
-    # Temperature (secondary axis) - YOUR ORIGINAL STYLING
+    # Temperature trace - YOUR IMPROVED STYLING
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['temperature'],
             name='Temperature (°F)',
-            line=dict(color='#ff7f0e', width=3)
+            line=dict(color='#ff7f0e', width=2, dash='dot'),
+            hovertemplate='<b>Date: %{x|%b %d, %Y}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
         ),
         secondary_y=True
     )
     
+    # Update layout to match reference image style - YOUR IMPROVED STYLING
     fig.update_layout(
-        title="Daily Bike Trips and Temperature Over Time",
+        title=dict(
+            text='Daily Bike Trips vs Temperature in NYC',
+            x=0.5,
+            xanchor='center',
+            font=dict(size=16, color='black')
+        ),
         height=500,
-        template='plotly_white'
+        template='plotly_white',
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            bgcolor='rgba(255,255,255,0.8)'
+        ),
+        margin=dict(l=60, r=60, t=80, b=60)
     )
     
-    fig.update_yaxes(title_text="Daily Bike Trips", secondary_y=False)
-    fig.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
+    # Update Y-axes to match reference image style - YOUR IMPROVED STYLING
+    fig.update_yaxes(
+        title_text="Daily Bike Trips",
+        secondary_y=False,
+        title_font=dict(size=12),
+        tickfont=dict(size=11),
+        gridcolor='lightgray',
+        zerolinecolor='lightgray',
+        range=[0, display_data['daily_trips'].max() * 1.1]
+    )
+    
+    fig.update_yaxes(
+        title_text="Temperature (°F)",
+        secondary_y=True,
+        title_font=dict(size=12),
+        tickfont=dict(size=11),
+        gridcolor='lightgray',
+        zerolinecolor='lightgray',
+        range=[0, 100]  # Standard temperature range like your reference
+    )
+    
+    fig.update_xaxes(
+        title_text="Date",
+        title_font=dict(size=12),
+        tickfont=dict(size=11),
+        gridcolor='lightgray',
+        zerolinecolor='lightgray'
+    )
     
     st.plotly_chart(fig, use_container_width=True)
+    
+    # Add correlation metric below the chart
+    correlation = display_data['daily_trips'].corr(display_data['temperature'])
+    st.caption(f"Correlation between temperature and daily trips: {correlation:.2f}")
     
     # Insights Section
     st.markdown("---")
@@ -303,7 +352,7 @@ elif page == "Weather Impact Analysis":
     """)
 
 ###############################################################
-# MOST POPULAR STATIONS PAGE - IMPROVED BAR CHART ONLY
+# MOST POPULAR STATIONS PAGE 
 ###############################################################
 
 elif page == "Most Popular Stations":
