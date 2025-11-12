@@ -1,9 +1,6 @@
 """
 Part_2 Streamlit dashboard for NYC Citi Bike Strategy
-Uses relative dataset and map paths (../data/...) suitable for deployment to Streamlit Cloud.
-This script is a refactor of the original dashboard into a multipage Streamlit app
-with clearly separated pages: Intro, Line Chart, Top Stations, Map, Extra Analysis,
-and Recommendations.
+
 
 Author: Part_2 refactor
 """
