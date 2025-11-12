@@ -1,6 +1,5 @@
 ###############################################################
 # NYC Citi Bike Strategy Dashboard - Part 2
-# Stable Fixed Version
 ###############################################################
 
 import streamlit as st
@@ -49,11 +48,11 @@ st.markdown("""
         font-weight: 600;
     }
     .business-challenge {
-        background-color: #f0f8ff;
-        padding: 2rem;
+        padding: 1.5rem;
         border-radius: 10px;
-        border: 1px solid #1f77b4;
-        margin: 1rem 0;
+        border: 2px solid #1f77b4;
+        margin-bottom: 1rem;
+        background-color: transparent;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -71,7 +70,7 @@ page = st.sidebar.selectbox(
         "Introduction",
         "Weather Impact Analysis", 
         "Most Popular Stations",
-        "Spatial Analysis",
+        "Interactive Map Analysis",
         "Recommendations"
     ]
 )
@@ -94,7 +93,7 @@ if page in ["Most Popular Stations", "Weather Impact Analysis"]:
     st.session_state.selected_seasons = selected_seasons
 
 ###############################################################
-# DATA LOADING FUNCTION - SIMPLIFIED AND STABLE
+# DATA LOADING FUNCTION
 ###############################################################
 
 @st.cache_data
@@ -211,7 +210,7 @@ if page == "Introduction":
     
     st.markdown("---")
     
-    # Business Challenge Section - FIXED
+    # Business Challenge Section - FIXED (no white background)
     st.markdown('<div class="section-header">Business Challenge</div>', unsafe_allow_html=True)
     
     st.markdown("""
@@ -481,24 +480,24 @@ elif page == "Most Popular Stations":
         """)
 
 ###############################################################
-# SPATIAL ANALYSIS PAGE - SIMPLIFIED AND STABLE
+# INTERACTIVE MAP ANALYSIS PAGE - STABLE VERSION
 ###############################################################
 
-elif page == "Spatial Analysis":
+elif page == "Interactive Map Analysis":
     
     st.markdown('<h1 class="main-header">Spatial Analysis</h1>', unsafe_allow_html=True)
     st.markdown("### Geographic Distribution and Hotspot Identification")
     
-    st.info("Geographic analysis of station distribution and usage patterns across NYC.")
+    st.info("Geographic visualization of station distribution and usage intensity across NYC.")
     
-    # Simple coordinate visualization instead of map
+    # Create a stable geographic visualization using Plotly
     st.markdown("---")
     st.markdown('<div class="section-header">Station Geographic Distribution</div>', unsafe_allow_html=True)
     
-    # Create a simple scatter plot for geographic representation
+    # Create a scatter plot for geographic representation (stable alternative to folium)
     fig_map = go.Figure()
     
-    # Mock coordinates for stations (simplified Manhattan area)
+    # Mock coordinates for stations in Manhattan area
     np.random.seed(42)
     station_coords = {}
     for station in top_stations['start_station_name']:
@@ -507,11 +506,12 @@ elif page == "Spatial Analysis":
         lng = -73.99 + np.random.uniform(-0.03, 0.03)
         station_coords[station] = (lat, lng)
     
-    # Add scatter points for stations
+    # Prepare data for scatter plot
     lats = []
     lngs = []
     sizes = []
     names = []
+    trips_list = []
     
     for _, station in top_stations.iterrows():
         name = station['start_station_name']
@@ -520,22 +520,24 @@ elif page == "Spatial Analysis":
             lat, lng = station_coords[name]
             lats.append(lat)
             lngs.append(lng)
-            sizes.append(min(50, max(10, trips / 3000)))
+            sizes.append(min(50, max(10, trips / 3000)))  # Scale marker size
             names.append(name)
+            trips_list.append(trips)
     
+    # Create the scatter plot
     fig_map.add_trace(go.Scatter(
         x=lngs,
         y=lats,
         mode='markers',
         marker=dict(
             size=sizes,
-            color=top_stations['trip_count'].head(len(lats)),
+            color=trips_list,
             colorscale='Blues',
             showscale=True,
             colorbar=dict(title="Trip Count")
         ),
         text=names,
-        hovertemplate='<b>%{text}</b><br>Lat: %{y:.3f}<br>Lon: %{x:.3f}<extra></extra>'
+        hovertemplate='<b>%{text}</b><br>Trips: %{marker.color:,}<br>Lat: %{y:.3f}<br>Lon: %{x:.3f}<extra></extra>'
     ))
     
     fig_map.update_layout(
