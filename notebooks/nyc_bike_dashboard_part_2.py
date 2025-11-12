@@ -245,46 +245,108 @@ elif page == "Weather Impact Analysis":
         correlation = display_data['daily_trips'].corr(display_data['temperature'])
         st.metric("Temperature Correlation", f"{correlation:.3f}")
     
-    # Main visualization - DUAL AXIS LINE CHART 
+    # Main visualization - IMPROVED DUAL AXIS LINE CHART
     st.markdown("---")
     st.markdown('<div class="section-header">Daily Trips vs Temperature</div>', unsafe_allow_html=True)
     
-    fig_2 = make_subplots(specs=[[{"secondary_y": True}]])
-
-    fig_2.add_trace(
-        go.Scatter(x=display_data['date'], y=display_data['daily_trips'], name='Daily bike rides', marker={'color': 'blue'}),
-        secondary_y=False
-    )
-
-    fig_2.add_trace(
-        go.Scatter(x=display_data['date'], y=display_data['temperature'], name='Daily temperature', marker={'color': 'red'}),
-        secondary_y=True
-    )
-
-    fig_2.update_layout(
-        title='Daily bike trips and temperatures in NYC',
-        height=400
-    )
-
-    st.plotly_chart(fig_2, use_container_width=True)
+    # Create figure with secondary y-axis
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    st.markdown("There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency " \
-    "of bike trips taken daily. As temperatures plunge, so does bike usage. This insight indicates that the shortage problem may be prevalent " \
-    "merely in the warmer months, approximately from May to October.")
+    # Add Daily Trips line (left axis)
+    fig.add_trace(
+        go.Scatter(
+            x=display_data['date'],
+            y=display_data['daily_trips'],
+            name="Daily Bike Trips",
+            line=dict(color="#3366CC", width=3),
+            opacity=0.9,
+            hovertemplate="<b>%{x|%b %d, %Y}</b><br>Trips: %{y:,}<extra></extra>"
+        ),
+        secondary_y=False,
+    )
     
-    st.markdown("""
-    **Temperature Impact:**
-    - Strong positive correlation between temperature and bike usage
-    - Optimal temperature range: 65°F - 80°F for maximum ridership
-    - Significant usage drop below 45°F
-    - Summer peaks show 60-70% higher usage than winter lows
+    # Add Temperature line (right axis)
+    fig.add_trace(
+        go.Scatter(
+            x=display_data['date'],
+            y=display_data['temperature'],
+            name="Temperature (°F)",
+            line=dict(color="#FF6633", width=2.5),
+            opacity=0.8,
+            hovertemplate="<b>%{x|%b %d, %Y}</b><br>Temp: %{y:.1f}°F<extra></extra>"
+        ),
+        secondary_y=True,
+    )
     
-    **Seasonal Patterns:**
-    - High season: May through October
-    - Shoulder seasons: April and November  
-    - Low season: December through March
-    - Weekend effect: 20% higher usage on weekends
-    """)
+    # Update layout for better readability
+    fig.update_layout(
+        height=500,
+        template="plotly_white",
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5
+        ),
+        title_font_size=16,
+        font_size=12,
+        margin=dict(t=80, l=80, r=80, b=80)
+    )
+    
+    # Set y-axes titles with better spacing
+    fig.update_yaxes(
+        title_text="<b>Daily Bike Trips</b>",
+        secondary_y=False,
+        title_font=dict(size=14),
+        gridcolor='lightgray',
+        gridwidth=0.5
+    )
+    
+    fig.update_yaxes(
+        title_text="<b>Temperature (°F)</b>",
+        secondary_y=True,
+        title_font=dict(size=14),
+        gridcolor='lightgray',
+        gridwidth=0.25
+    )
+    
+    fig.update_xaxes(
+        title_text="<b>Date</b>",
+        title_font=dict(size=14),
+        gridcolor='lightgray',
+        gridwidth=0.5
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    st.markdown("There is an obvious correlation between the rise and drop of temperatures and their relationship " \
+    "with the frequency of bike trips taken daily. As temperatures plunge, so does bike usage. This insight indicates that the " \
+    "shortage problem may be prevalent merely in the warmer months, approximately from May to October.")
+    
+    # Additional insights columns
+    col_insight1, col_insight2 = st.columns(2)
+    
+    with col_insight1:
+        st.markdown("""
+        ** Temperature Impact:**
+        
+        - Strong positive correlation between temperature and bike usage
+        - Optimal temperature range: 65°F - 80°F for maximum ridership
+        - Significant usage drop below 45°F
+        - Summer peaks show 60-70% higher usage than winter lows
+        """)
+    
+    with col_insight2:
+        st.markdown("""
+        **Seasonal Patterns:**
+        
+        - High season: May through October
+        - Shoulder seasons: April and November
+        - Low season: December through March
+        - Weekend effect: 20% higher usage on weekends
+        """)
 
 ###############################################################
 # MOST POPULAR STATIONS PAGE 
