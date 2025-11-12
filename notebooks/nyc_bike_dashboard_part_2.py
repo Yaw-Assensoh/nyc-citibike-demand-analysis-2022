@@ -429,24 +429,23 @@ elif page == "Most Popular Stations":
 
 elif page == "Weather Impact Analysis":
     
-    fig_2 = make_subplots(specs=[[{"secondary_y": True}]])
+    fig_2, ax1 = plt.subplots(figsize=(12, 5))
 
-    fig_2.add_trace(
-        go.Scatter(x=daily_data['date'], y=daily_data['daily_trips'], name='Daily bike rides', marker={'color': 'blue'}),
-        secondary_y=False
-    )
+    color = 'tab:blue'
+    ax1.set_xlabel('Date')
+    ax1.set_ylabel('Daily Trips', color=color)
+    ax1.plot(daily_data['date'], daily_data['daily_trips'], color=color, label='Daily Trips')
+    ax1.tick_params(axis='y', labelcolor=color)
 
-    fig_2.add_trace(
-        go.Scatter(x=daily_data['date'], y=daily_data['temperature'], name='Daily temperature', marker={'color': 'red'}),
-        secondary_y=True
-    )
+    ax2 = ax1.twinx()
+    color = 'tab:orange'
+    ax2.set_ylabel('Temperature (°F)', color=color)
+    ax2.plot(daily_data['date'], daily_data['temperature'], color=color, label='Temperature (°F)')
+    ax2.tick_params(axis='y', labelcolor=color)
 
-    fig_2.update_layout(
-        title='Daily bike trips and temperatures in NYC',
-        height=400
-    )
-
-    st.plotly_chart(fig_2, use_container_width=True)
+    plt.title('Daily Bike Trips vs Temperature in NYC (Full 2022 Data)')
+    fig_2.tight_layout()
+    st.pyplot(fig_2)
     
     st.markdown("There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of " \
     "bike trips taken daily. As temperatures plunge, so does bike usage. This insight indicates that the shortage problem may be prevalent " \
@@ -471,6 +470,7 @@ elif page == "Weather Impact Analysis":
     - Low season: December through March
     - Weekend effect: 20% higher usage on weekends
     """)
+
 
 ###############################################################
 # RECOMMENDATIONS PAGE
