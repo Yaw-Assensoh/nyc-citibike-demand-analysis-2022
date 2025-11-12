@@ -79,6 +79,65 @@ if page in ["Most Popular Stations", "Weather Impact Analysis"]:
 
 @st.cache_data
 def load_dashboard_data():
+    # Define base directory relative to script location 
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Try multiple possible locations for data files 
+    possible_paths = [
+        os.path.join(base_dir, "data/processed/top_20_stations_full.csv"),
+        os.path.join(base_dir, "data/processed/top_20_stations.csv"),
+        os.path.join(base_dir, "../data/processed/top_20_stations_full.csv"),
+        os.path.join(base_dir, "../data/processed/top_20_stations.csv"),
+    ]
+    
+    top_stations = None
+    daily_data = None
+    
+    # Find and load top_stations
+    for path in possible_paths:
+        if os.path.exists(path):
+            top_stations = pd.read_csv(path)
+            break
+    
+    # Try multiple possible locations for daily data
+    daily_paths = [
+        os.path.join(base_dir, "data/processed/daily_aggregated_data_full.csv"),
+        os.path.join(base_dir, "data/processed/daily_aggregated_data.csv"),
+        os.path.join(base_dir, "../data/processed/daily_aggregated_data_full.csv"),
+        os.path.join(base_dir, "../data/processed/daily_aggregated_data.csv"),
+    ]
+    
+    # Find and load daily_data
+    for path in daily_paths:
+        if os.path.exists(path):
+            daily_data = pd.read_csv(path)
+            daily_data['date'] = pd.to_datetime(daily_data['date'])
+            break
+    
+    # If files not found, show error
+    if top_stations is None:
+        st.error("Error: Could not find top_stations CSV files in data/processed/")
+        return None, None
+    
+    if daily_data is None:
+        st.error("Error: Could not find daily_aggregated_data CSV files in data/processed/")
+        return None, None
+    
+    return top_stations, daily_data
+
+# Load the data
+with st.spinner('Loading dashboard data...'):
+    top_stations, daily_data = load_dashboard_data()
+
+# Only show metrics if data loaded successfully
+if top_stations is not None and daily_data is not None:
+    st.sidebar.metric("Total Stations Analyzed", len(top_stations))
+    st.sidebar.metric("Date Range", f"{daily_data['date'].min().date()} to {daily_data['date'].max().date()}")
+    st.sidebar.metric("Peak Daily Trips", f"{daily_data['daily_trips'].max():,}")
+
+
+@st.cache_data
+def load_dashboard_data():
     """Load and prepare dashboard data"""
     
     # Create sample data
