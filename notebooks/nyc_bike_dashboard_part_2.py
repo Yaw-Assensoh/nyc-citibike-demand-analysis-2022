@@ -212,7 +212,7 @@ if page == "Introduction":
 
 elif page == "Weather Impact Analysis":
     
-    st.markdown('<h1 class="main-header">🌤️ Weather Impact Analysis</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Weather Impact Analysis</h1>', unsafe_allow_html=True)
     st.markdown("### Daily Bike Trips vs Temperature Correlation")
     
     if daily_data is not None:
@@ -301,7 +301,7 @@ elif page == "Weather Impact Analysis":
         # Interpretation section (REQUIRED)
         st.markdown("---")
         st.markdown("""
-        ## 📊 Interpretation of Findings
+        ## Interpretation of Findings
         
         **There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of bike trips taken daily.** 
         
@@ -314,7 +314,7 @@ elif page == "Weather Impact Analysis":
         
         # Enhanced Insights Section
         st.markdown("---")
-        st.markdown("### 🔍 Key Insights")
+        st.markdown("###  Key Insights")
         
         col5, col6 = st.columns(2)
         
@@ -330,7 +330,7 @@ elif page == "Weather Impact Analysis":
         
         with col6:
             st.markdown("""
-            **📈 Seasonal Patterns:**
+            ** Seasonal Patterns:**
             - **High season**: May through October (orange highlight)
             - **Shoulder seasons**: April and November  
             - **Low season**: December through March
@@ -341,7 +341,7 @@ elif page == "Weather Impact Analysis":
         
         # Strategic Recommendations
         st.markdown("---")
-        st.markdown("### 💡 Strategic Recommendations")
+        st.markdown("### Strategic Recommendations")
         
         st.markdown("""
         **For Operations Planning:**
@@ -441,7 +441,7 @@ elif page == "Most Popular Stations":
 
 elif page == "Seasonal Trends":
     
-    st.markdown('<h1 class="main-header">📊 Seasonal Trends Analysis</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header"> Seasonal Trends Analysis</h1>', unsafe_allow_html=True)
     st.markdown("### Monthly and Quarterly Usage Patterns")
     
     if daily_data is not None:
@@ -524,7 +524,7 @@ elif page == "Seasonal Trends":
         
         # Seasonal Insights
         st.markdown("---")
-        st.markdown("### 📈 Seasonal Insights")
+        st.markdown("###  Seasonal Insights")
         
         st.markdown(f"""
         **Quarterly Performance Analysis:**
@@ -549,7 +549,7 @@ elif page == "Seasonal Trends":
 
 elif page == "Interactive Map Analysis":
     
-    st.markdown('<h1 class="main-header">🗺️ Interactive Map Analysis</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header"> Interactive Map Analysis</h1>', unsafe_allow_html=True)
     st.markdown("### Geographic Distribution of Bike Stations")
     
     st.info("This section would display an interactive map showing station locations and usage heatmaps.")
@@ -591,7 +591,7 @@ elif page == "Interactive Map Analysis":
 
 elif page == "Recommendations":
     
-    st.markdown('<h1 class="main-header">💡 Strategic Recommendations</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header"> Strategic Recommendations</h1>', unsafe_allow_html=True)
     st.markdown("### Data-Driven Solutions for Bike Share Optimization")
     
     # Executive Summary
@@ -607,7 +607,7 @@ elif page == "Recommendations":
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("### 🚴‍♂️ Operational Excellence")
+        st.markdown("###  Operational Excellence")
         st.markdown("""
         **1. Seasonal Fleet Management**
         - Scale bike inventory by 40-50% during May-October peak season
@@ -620,7 +620,7 @@ elif page == "Recommendations":
         - Use predictive analytics for demand forecasting
         """)
         
-        st.markdown("### 📍 Geographic Optimization")
+        st.markdown("###  Geographic Optimization")
         st.markdown("""
         **3. Station Expansion Strategy**
         - Target underserved residential neighborhoods
@@ -629,7 +629,7 @@ elif page == "Recommendations":
         """)
     
     with col2:
-        st.markdown("### 🌦️ Weather Adaptation")
+        st.markdown("###  Weather Adaptation")
         st.markdown("""
         **4. Climate-Responsive Operations**
         - Implement weather-based demand forecasting
@@ -642,7 +642,7 @@ elif page == "Recommendations":
         - Weekend and holiday premium pricing
         """)
         
-        st.markdown("### 📊 Data-Driven Decision Making")
+        st.markdown("###  Data-Driven Decision Making")
         st.markdown("""
         **6. Advanced Analytics**
         - Real-time monitoring of station utilization
