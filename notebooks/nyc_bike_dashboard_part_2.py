@@ -429,23 +429,43 @@ elif page == "Most Popular Stations":
 
 elif page == "Weather Impact Analysis":
     
-    fig_2, ax1 = plt.subplots(figsize=(12, 5))
+    fig_2 = make_subplots(specs=[[{"secondary_y": True}]])
 
-    color = 'tab:blue'
-    ax1.set_xlabel('Date')
-    ax1.set_ylabel('Daily Trips', color=color)
-    ax1.plot(daily_data['date'], daily_data['daily_trips'], color=color, label='Daily Trips')
-    ax1.tick_params(axis='y', labelcolor=color)
+    fig_2.add_trace(
+        go.Scatter(
+            x=daily_data['date'],
+            y=daily_data['daily_trips'],
+            mode='lines',
+            name='Daily Trips',
+            line=dict(color='blue', width=2)
+        ),
+        secondary_y=False
+    )
 
-    ax2 = ax1.twinx()
-    color = 'tab:orange'
-    ax2.set_ylabel('Temperature (°F)', color=color)
-    ax2.plot(daily_data['date'], daily_data['temperature'], color=color, label='Temperature (°F)')
-    ax2.tick_params(axis='y', labelcolor=color)
+    fig_2.add_trace(
+        go.Scatter(
+            x=daily_data['date'],
+            y=daily_data['temperature'],
+            mode='lines',
+            name='Temperature (°F)',
+            line=dict(color='orange', width=2)
+        ),
+        secondary_y=True
+    )
 
-    plt.title('Daily Bike Trips vs Temperature in NYC (Full 2022 Data)')
-    fig_2.tight_layout()
-    st.pyplot(fig_2)
+    fig_2.update_layout(
+        title='Daily Bike Trips vs Temperature in NYC (Full 2022 Data)',
+        xaxis_title='Date',
+        yaxis_title='Daily Trips',
+        height=500,
+        template='plotly_white',
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+    )
+
+    fig_2.update_yaxes(title_text="Daily Trips", secondary_y=False)
+    fig_2.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
+
+    st.plotly_chart(fig_2, use_container_width=True)
     
     st.markdown("There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of " \
     "bike trips taken daily. As temperatures plunge, so does bike usage. This insight indicates that the shortage problem may be prevalent " \
