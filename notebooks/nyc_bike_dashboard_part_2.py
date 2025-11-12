@@ -427,33 +427,39 @@ elif page == "Most Popular Stations":
 # WEATHER IMPACT ANALYSIS PAGE
 ###############################################################
 
-elif page == 'Weather component and bike usage':
 
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+elif page == 'Weather Impact Analysis':
 
-    fig.add_trace(
-        go.Scatter(x=daily_data['date'], y=daily_data['daily_trips'], name='Daily bike rides'),
+    ### Create the dual axis line chart page ###
+
+    fig_2 = make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig_2.add_trace(
+        go.Scatter(
+            x=daily_data['date'],
+            y=daily_data['daily_trips'],
+            name='Daily bike rides',
+            line=dict(color='blue')
+        ),
         secondary_y=False
     )
 
-    fig.add_trace(
-        go.Scatter(x=daily_data['date'], y=daily_data['temperature'], name='Daily temperature'),
+    fig_2.add_trace(
+        go.Scatter(
+            x=daily_data['date'],
+            y=daily_data['temperature'],
+            name='Daily temperature',
+            line=dict(color='orange')
+        ),
         secondary_y=True
     )
 
-    st.plotly_chart(fig, use_container_width=True)
-
     fig_2.update_layout(
         title='Daily Bike Trips vs Temperature in NYC (Full 2022 Data)',
+        height=400,
         xaxis_title='Date',
-        yaxis_title='Daily Trips',
-        height=500,
-        template='plotly_white',
-        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+        yaxis_title='Daily Trips'
     )
-
-    fig_2.update_yaxes(title_text="Daily Trips", secondary_y=False)
-    fig_2.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
 
     st.plotly_chart(fig_2, use_container_width=True)
     
