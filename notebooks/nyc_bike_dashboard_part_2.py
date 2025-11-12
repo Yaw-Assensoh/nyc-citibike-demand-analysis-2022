@@ -424,76 +424,33 @@ elif page == "Most Popular Stations":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS PAGE - SIMPLE DUAL AXIS LINE CHART
+# WEATHER IMPACT ANALYSIS PAGE
 ###############################################################
 
 elif page == "Weather Impact Analysis":
     
-    st.markdown('<h1 class="main-header">Weather Impact Analysis</h1>', unsafe_allow_html=True)
-    st.markdown("### Understanding Temperature and Seasonal Effects on Bike Usage")
-    
-    # Display current filter status
-    if 'selected_seasons' in locals() and selected_seasons:
-        season_text = f"Showing data for: {', '.join(selected_seasons)}"
-        display_data = filtered_daily_data
-    else:
-        season_text = "Showing data for all seasons"
-        display_data = daily_data
-    
-    st.info(season_text)
-    
-    # KPI Metrics
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        avg_trips = display_data['daily_trips'].mean()
-        st.metric("Average Daily Trips", f"{avg_trips:,.0f}")
-    
-    with col2:
-        avg_temp = display_data['temperature'].mean()
-        st.metric("Average Temperature", f"{avg_temp:.1f}°F")
-    
-    with col3:
-        correlation = display_data['daily_trips'].corr(display_data['temperature'])
-        st.metric("Temperature Correlation", f"{correlation:.3f}")
-    
-    # Main visualization - SIMPLE DUAL AXIS LINE CHART (EXACTLY LIKE YOUR IMAGE)
-    st.markdown("---")
-    st.markdown("### Daily Bike Trips vs Temperature in NYC")
-    
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-    
-    # Daily trips trace - left axis
-    fig.add_trace(
-        go.Scatter(
-            x=display_data['date'],
-            y=display_data['daily_trips'],
-            name='Daily Bike Trips',
-            line=dict(color='blue', width=2)
-        ),
+    fig_2 = make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig_2.add_trace(
+        go.Scatter(x=daily_data['date'], y=daily_data['daily_trips'], name='Daily bike rides', marker={'color': 'blue'}),
         secondary_y=False
     )
-    
-    # Temperature trace - right axis  
-    fig.add_trace(
-        go.Scatter(
-            x=display_data['date'],
-            y=display_data['temperature'],
-            name='Temperature (°F)',
-            line=dict(color='red', width=2)
-        ),
+
+    fig_2.add_trace(
+        go.Scatter(x=daily_data['date'], y=daily_data['temperature'], name='Daily temperature', marker={'color': 'red'}),
         secondary_y=True
     )
-    
-    fig.update_layout(
-        height=500,
-        title='Daily Bike Trips vs Temperature in NYC'
+
+    fig_2.update_layout(
+        title='Daily bike trips and temperatures in NYC',
+        height=400
     )
+
+    st.plotly_chart(fig_2, use_container_width=True)
     
-    fig.update_yaxes(title_text="Daily Bike Trips", secondary_y=False)
-    fig.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
-    
-    st.plotly_chart(fig, use_container_width=True)
+    st.markdown("There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of " \
+    "bike trips taken daily. As temperatures plunge, so does bike usage. This insight indicates that the shortage problem may be prevalent " \
+    "merely in the warmer months, approximately from May to October.")
     
     # Insights Section
     st.markdown("---")
@@ -514,7 +471,7 @@ elif page == "Weather Impact Analysis":
     - Low season: December through March
     - Weekend effect: 20% higher usage on weekends
     """)
-    
+
 ###############################################################
 # RECOMMENDATIONS PAGE
 ###############################################################
