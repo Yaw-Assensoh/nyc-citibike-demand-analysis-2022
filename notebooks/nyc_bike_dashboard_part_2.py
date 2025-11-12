@@ -44,51 +44,55 @@ def load_dashboard_data():
     # Define base directory relative to script location 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Try multiple possible locations for data files 
-    possible_paths = [
-        os.path.join(base_dir, "data/processed/top_20_stations_full.csv"),
-        os.path.join(base_dir, "data/processed/top_20_stations.csv"),
-        os.path.join(base_dir, "../data/processed/top_20_stations_full.csv"),
-        os.path.join(base_dir, "../data/processed/top_20_stations.csv"),
-    ]
+    # Use the exact paths from your file structure
+    data_dir = os.path.join(base_dir, "data/processed")
+    
+    # Check if data directory exists
+    if not os.path.exists(data_dir):
+        st.error(f"Data directory not found: {data_dir}")
+        return None, None
     
     top_stations = None
     daily_data = None
     
-    # Find and load top_stations
-    for path in possible_paths:
-        if os.path.exists(path):
-            top_stations = pd.read_csv(path)
-            break
-    
-    # Try multiple possible locations for daily data
-    daily_paths = [
-        os.path.join(base_dir, "data/processed/daily_aggregated_data_full.csv"),
-        os.path.join(base_dir, "data/processed/daily_aggregated_data.csv"),
-        os.path.join(base_dir, "../data/processed/daily_aggregated_data_full.csv"),
-        os.path.join(base_dir, "../data/processed/daily_aggregated_data.csv"),
+    # Load top stations data
+    top_stations_paths = [
+        os.path.join(data_dir, "top_20_stations_full.csv"),
+        os.path.join(data_dir, "top_20_stations.csv")
     ]
     
-    # Find and load daily_data
-    for path in daily_paths:
+    for path in top_stations_paths:
+        if os.path.exists(path):
+            top_stations = pd.read_csv(path)
+            st.sidebar.success(f"Loaded: {os.path.basename(path)}")
+            break
+    
+    # Load daily data
+    daily_data_paths = [
+        os.path.join(data_dir, "daily_aggregated_data_full.csv"),
+        os.path.join(data_dir, "daily_aggregated_data.csv")
+    ]
+    
+    for path in daily_data_paths:
         if os.path.exists(path):
             daily_data = pd.read_csv(path)
             daily_data['date'] = pd.to_datetime(daily_data['date'])
+            st.sidebar.success(f"Loaded: {os.path.basename(path)}")
             break
     
-    # If files not found, show error
+    # Check if both files were loaded
     if top_stations is None:
-        st.error("Error: Could not find top_stations CSV files in data/processed/")
+        st.error("Could not find top_stations CSV file")
         return None, None
     
     if daily_data is None:
-        st.error("Error: Could not find daily_aggregated_data CSV files in data/processed/")
+        st.error("Could not find daily_aggregated_data CSV file")
         return None, None
     
     return top_stations, daily_data
 
 # Load the data
-with st.spinner('Loading dashboard data...'):
+with st.spinner('Loading dashboard data from data/processed/...'):
     top_stations, daily_data = load_dashboard_data()
 
 # Only show metrics if data loaded successfully
@@ -127,6 +131,15 @@ if page == "Introduction":
     if top_stations is not None and daily_data is not None:
         st.markdown("---")
         st.success("✅ Data successfully loaded from data/processed/")
+        
+        # Show data preview
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Top Stations Preview")
+            st.dataframe(top_stations.head(10), use_container_width=True)
+        with col2:
+            st.subheader("Daily Data Preview")
+            st.dataframe(daily_data.head(10), use_container_width=True)
     else:
         st.error("❌ Unable to load data. Please check file paths.")
     
@@ -142,58 +155,62 @@ elif page == "Weather Impact Analysis":
     st.markdown("### Daily Bike Trips vs Temperature Correlation")
     
     if daily_data is not None:
-        # Create dual-axis line chart 
-        fig_line = make_subplots(specs=[[{"secondary_y": True}]])
-        
-        # Daily trips trace 
-        fig_line.add_trace(
-            go.Scatter(
-                x=daily_data['date'],
-                y=daily_data['daily_trips'],
-                name='Daily Bike Trips',
-                line=dict(color='#1f77b4', width=3),
-                hovertemplate='<b>Date: %{x}</b><br>Trips: %{y:,}<extra></extra>'
-            ),
-            secondary_y=False
-        )
-        
-        # Temperature trace 
-        fig_line.add_trace(
-            go.Scatter(
-                x=daily_data['date'],
-                y=daily_data['temperature'],
-                name='Average Temperature (°F)',
-                line=dict(color='#ff7f0e', width=2),
-                hovertemplate='<b>Date: %{x}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
-            ),
-            secondary_y=True
-        )
-        
-        # Layout 
-        fig_line.update_layout(
-            title='Daily Bike Trips vs Temperature in NYC',
-            height=500,
-            template='plotly_white',
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
-        
-        fig_line.update_yaxes(title_text="Daily Trips", secondary_y=False)
-        fig_line.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
-        
-        st.plotly_chart(fig_line, use_container_width=True)
-        
-        # Interpretation section (REQUIRED)
-        st.markdown("""
-        ###  Interpretation of Findings
-        
-        **There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of bike trips taken daily.** 
-        
-        As temperatures plunge during winter months, so does bike usage, with a noticeable decline starting in November and reaching the lowest points in January and February. 
-        Conversely, as temperatures rise in spring and summer, bike usage increases significantly, peaking during the warmest months.
-        
-        **This insight indicates that the shortage problem may be prevalent merely in the warmer months, approximately from May to October,** 
-        when demand surges due to favorable weather conditions. The seasonal pattern suggests opportunities for strategic operational scaling.
-        """)
+        # Check if temperature column exists
+        if 'temperature' not in daily_data.columns:
+            st.error("Temperature data not found in daily_aggregated_data.csv")
+        else:
+            # Create dual-axis line chart 
+            fig_line = make_subplots(specs=[[{"secondary_y": True}]])
+            
+            # Daily trips trace 
+            fig_line.add_trace(
+                go.Scatter(
+                    x=daily_data['date'],
+                    y=daily_data['daily_trips'],
+                    name='Daily Bike Trips',
+                    line=dict(color='#1f77b4', width=3),
+                    hovertemplate='<b>Date: %{x}</b><br>Trips: %{y:,}<extra></extra>'
+                ),
+                secondary_y=False
+            )
+            
+            # Temperature trace 
+            fig_line.add_trace(
+                go.Scatter(
+                    x=daily_data['date'],
+                    y=daily_data['temperature'],
+                    name='Average Temperature (°F)',
+                    line=dict(color='#ff7f0e', width=2),
+                    hovertemplate='<b>Date: %{x}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
+                ),
+                secondary_y=True
+            )
+            
+            # Layout 
+            fig_line.update_layout(
+                title='Daily Bike Trips vs Temperature in NYC',
+                height=500,
+                template='plotly_white',
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+            
+            fig_line.update_yaxes(title_text="Daily Trips", secondary_y=False)
+            fig_line.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
+            
+            st.plotly_chart(fig_line, use_container_width=True)
+            
+            # Interpretation section (REQUIRED)
+            st.markdown("""
+            ###  Interpretation of Findings
+            
+            **There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of bike trips taken daily.** 
+            
+            As temperatures plunge during winter months, so does bike usage, with a noticeable decline starting in November and reaching the lowest points in January and February. 
+            Conversely, as temperatures rise in spring and summer, bike usage increases significantly, peaking during the warmest months.
+            
+            **This insight indicates that the shortage problem may be prevalent merely in the warmer months, approximately from May to October,** 
+            when demand surges due to favorable weather conditions. The seasonal pattern suggests opportunities for strategic operational scaling.
+            """)
     else:
         st.error("Unable to load data for weather analysis")
 
@@ -216,7 +233,8 @@ elif page == "Most Popular Stations":
         
         # Display metrics
         total_rides = top_stations['trip_count'].sum()
-        st.metric("Total Rides in Selection", f"{total_rides:,}")
+        st.metric("Total Rides", f"{total_rides:,}")
+        st.metric("Number of Stations", len(top_stations))
         st.write(f"Showing data for: {', '.join(season_filter)}")
         
         # Create bar chart 
@@ -224,7 +242,8 @@ elif page == "Most Popular Stations":
             x=top_stations['start_station_name'],
             y=top_stations['trip_count'],
             marker_color=top_stations['trip_count'],
-            marker_colorscale='Blues'
+            marker_colorscale='Blues',
+            hovertemplate='<b>%{x}</b><br>Trips: %{y:,}<extra></extra>'
         ))
         
         fig_bar.update_layout(
@@ -236,6 +255,10 @@ elif page == "Most Popular Stations":
         )
         
         st.plotly_chart(fig_bar, use_container_width=True)
+        
+        # Show data table
+        st.subheader("Station Details")
+        st.dataframe(top_stations, use_container_width=True)
         
         # Interpretation section (REQUIRED)
         st.markdown("""
@@ -268,7 +291,7 @@ elif page == "Interactive Map with Aggregated Bike Trips":
         map_paths = [
             os.path.join(base_dir, "../notebooks/nyc_bike_trips_aggregated.html"),
             os.path.join(base_dir, "notebooks/nyc_bike_trips_aggregated.html"),
-            os.path.join(base_dir, "nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "../../notebooks/nyc_bike_trips_aggregated.html"),
         ]
         
         html_content = None
@@ -279,21 +302,34 @@ elif page == "Interactive Map with Aggregated Bike Trips":
                 with open(map_path, 'r', encoding='utf-8') as f:
                     html_content = f.read()
                 map_found_path = map_path
-                st.sidebar.success(f"Map loaded from: {os.path.basename(map_path)}")
+                st.sidebar.success(f"Map loaded from: {os.path.basename(os.path.dirname(map_path))}")
                 break
         
         if html_content:
             st.components.v1.html(html_content, height=600, scrolling=True)
+            st.success("✅ Interactive map loaded successfully!")
         else:
             st.error("""
             **Map Not Found**
             
             Could not find nyc_bike_trips_aggregated.html in:
             - ../notebooks/
-            - notebooks/
-            - current directory
+            - notebooks/ 
+            - ../../notebooks/
             
-            Please ensure the map file exists in one of these locations.
+            Please ensure the map file exists in your notebooks folder.
+            """)
+            st.info("Current directory structure:")
+            st.code(f"""
+            {base_dir}
+            ├── your_script.py
+            ├── data/
+            │   └── processed/
+            │       ├── top_20_stations.csv
+            │       ├── daily_aggregated_data.csv
+            │       └── ...
+            └── notebooks/
+                └── nyc_bike_trips_aggregated.html
             """)
         
     except Exception as e:
