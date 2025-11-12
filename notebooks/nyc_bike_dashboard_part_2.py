@@ -424,69 +424,103 @@ elif page == "Most Popular Stations":
     """)
 
 ###############################################################
-# INTERACTIVE MAP ANALYSIS PAGE - FIXED FOR NOTEBOOKS FOLDER
+# WEATHER IMPACT ANALYSIS PAGE - SIMPLE DUAL AXIS LINE CHART
 ###############################################################
 
-elif page == "Interactive Map Analysis":
+elif page == "Weather Impact Analysis":
     
-    st.markdown('<h1 class="main-header">Spatial Analysis</h1>', unsafe_allow_html=True)
-    st.markdown("### Geographic Distribution and Hotspot Identification")
+    st.markdown('<h1 class="main-header">Weather Impact Analysis</h1>', unsafe_allow_html=True)
+    st.markdown("### Understanding Temperature and Seasonal Effects on Bike Usage")
     
-    # Map section - FIXED to look in notebooks folder
+    # Display current filter status
+    if 'selected_seasons' in locals() and selected_seasons:
+        season_text = f"Showing data for: {', '.join(selected_seasons)}"
+        display_data = filtered_daily_data
+    else:
+        season_text = "Showing data for all seasons"
+        display_data = daily_data
+    
+    st.info(season_text)
+    
+    # KPI Metrics
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        avg_trips = display_data['daily_trips'].mean()
+        st.metric("Average Daily Trips", f"{avg_trips:,.0f}")
+    
+    with col2:
+        avg_temp = display_data['temperature'].mean()
+        st.metric("Average Temperature", f"{avg_temp:.1f}°F")
+    
+    with col3:
+        correlation = display_data['daily_trips'].corr(display_data['temperature'])
+        st.metric("Temperature Correlation", f"{correlation:.3f}")
+    
+    # Main visualization - SIMPLE DUAL AXIS LINE CHART
     st.markdown("---")
-    st.markdown('<div class="section-header">Interactive Station Map</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Daily Bike Trips vs Temperature</div>', unsafe_allow_html=True)
     
-    # Only try to load and display the HTML map file from notebooks folder
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        # Prioritize notebooks folder since that's where your file is
-        map_paths = [
-            os.path.join(base_dir, "notebooks/nyc_bike_trips_aggregated.html"),  # First priority
-            os.path.join(base_dir, "nyc_bike_trips_aggregated.html"),
-            os.path.join(base_dir, "maps/nyc_bike_trips_aggregated.html"),
-            os.path.join(base_dir, "../maps/nyc_bike_trips_aggregated.html"),
-        ]
-        
-        html_content = None
-        map_found = False
-        
-        for map_path in map_paths:
-            if os.path.exists(map_path):
-                with open(map_path, 'r', encoding='utf-8') as f:
-                    html_content = f.read()
-                st.success(f"Map loaded successfully!")
-                map_found = True
-                break
-        
-        if html_content and map_found:
-            # Display only the map, no other graphs
-            st.components.v1.html(html_content, height=600, scrolling=False)
-        else:
-            st.info("""
-            **Map Visualization**
-            
-            The interactive map file is not currently available. 
-            When available, it will display here showing geographic distribution of bike trips.
-            """)
-        
-    except Exception as e:
-        st.info("""
-        **Interactive Map**
-        
-        The map visualization will appear here when the HTML file is available in the repository.
-        """)
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    # Spatial Insights - Keep this section but remove any graphs
+    # Daily trips trace
+    fig.add_trace(
+        go.Scatter(
+            x=display_data['date'],
+            y=display_data['daily_trips'],
+            name='Daily Bike Trips',
+            line=dict(color='#1f77b4', width=2)
+        ),
+        secondary_y=False
+    )
+    
+    # Temperature trace
+    fig.add_trace(
+        go.Scatter(
+            x=display_data['date'],
+            y=display_data['temperature'],
+            name='Temperature (°F)',
+            line=dict(color='#ff7f0e', width=2)
+        ),
+        secondary_y=True
+    )
+    
+    fig.update_layout(
+        height=500
+    )
+    
+    fig.update_yaxes(title_text="Daily Trips", secondary_y=False)
+    fig.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Insights Section
     st.markdown("---")
-    st.markdown('<div class="section-header">Spatial Analysis Insights</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Key Insights</div>', unsafe_allow_html=True)
     
     st.markdown("""
+    **Temperature Impact:**
+    - Strong positive correlation between temperature and bike usage
+    - Optimal temperature range: 65°F - 80°F for maximum ridership
+    - Significant usage drop below 45°F
+    - Summer peaks show 60-70% higher usage than winter lows""")
+    
+    st.markdown("""           
+    **Seasonal Patterns:**
+    - High season: May through October
+    - Shoulder seasons: April and November  
+    - Low season: December through March
+    - Weekend effect: 20% higher usage on weekends
+    """)
+
+    st.markdown(""")
     **Infrastructure Patterns:**
     - Broadway corridor shows highest station density
     - Waterfront areas emerging as popular routes
     - Clear concentration in central business districts
-    - Tourist zones consistently high usage
+    - Tourist zones consistently high usage""")
     
+    st.markdown("""
     **Expansion Opportunities:**
     - East River crossings to Brooklyn/Queens
     - Residential neighborhood integration
