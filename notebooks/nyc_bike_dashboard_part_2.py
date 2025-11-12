@@ -212,12 +212,12 @@ if page == "Introduction":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS PAGE - ENHANCED WITH WARM SEASON HIGHLIGHTING
+# WEATHER IMPACT ANALYSIS PAGE - CLEAN VERSION
 ###############################################################
 
 elif page == "Weather Impact Analysis":
     
-    st.markdown('<h1 class="main-header">🌤️ Weather Impact Analysis</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Weather Impact Analysis</h1>', unsafe_allow_html=True)
     st.markdown("### Daily Bike Trips vs Temperature Correlation")
     
     # Display current filter status
@@ -233,7 +233,7 @@ elif page == "Weather Impact Analysis":
     # Calculate correlation coefficient
     correlation = display_data['daily_trips'].corr(display_data['temperature'])
     
-    # Enhanced KPI Metrics
+    # Clean KPI Metrics
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -252,13 +252,13 @@ elif page == "Weather Impact Analysis":
         warm_season = display_data[display_data['season'].isin(['Spring', 'Summer'])]
         cold_season = display_data[display_data['season'].isin(['Winter', 'Fall'])]
         seasonal_diff = warm_season['daily_trips'].mean() - cold_season['daily_trips'].mean()
-        st.metric("Warm vs Cold Season", f"+{seasonal_diff:,.0f}")
+        st.metric("Seasonal Difference", f"+{seasonal_diff:,.0f}")
     
-    # Main visualization - ENHANCED WITH WARM SEASON HIGHLIGHTING
+    # Main visualization - CLEAN LINE CHART
     st.markdown("---")
     st.markdown('<div class="section-header">Daily Bike Trips vs Temperature</div>', unsafe_allow_html=True)
     
-    # Create dual-axis line chart with warm season highlighting
+    # Create clean dual-axis line chart
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
     # Add warm season highlighting (May-October)
@@ -281,7 +281,7 @@ elif page == "Weather Impact Analysis":
                     annotation_position="top left"
                 )
     
-    # Bike trips (primary axis) - enhanced styling
+    # Bike trips (primary axis) - clean styling
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
@@ -293,7 +293,7 @@ elif page == "Weather Impact Analysis":
         secondary_y=False
     )
     
-    # Temperature (secondary axis) - enhanced styling
+    # Temperature (secondary axis) - clean styling
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
@@ -305,8 +305,9 @@ elif page == "Weather Impact Analysis":
         secondary_y=True
     )
     
+    # Clean layout
     fig.update_layout(
-        title="Daily Bike Trips vs Temperature Correlation with Warm Season Highlighting",
+        title="Daily Bike Trips vs Temperature Correlation",
         height=500,
         template='plotly_white',
         hovermode='x unified',
@@ -316,17 +317,19 @@ elif page == "Weather Impact Analysis":
             y=1.02,
             xanchor="center",
             x=0.5
-        )
+        ),
+        margin=dict(t=50, l=50, r=50, b=50)
     )
     
     fig.update_yaxes(title_text="Daily Bike Trips", secondary_y=False)
     fig.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
+    fig.update_xaxes(title_text="Date")
     
     st.plotly_chart(fig, use_container_width=True)
     
-    # Enhanced Interpretation Section
+    # Interpretation Section
     st.markdown("---")
-    st.markdown("## 📊 Interpretation of Findings")
+    st.markdown("## Interpretation of Findings")
     
     st.markdown("""
     **There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of bike trips taken daily.** 
@@ -338,15 +341,15 @@ elif page == "Weather Impact Analysis":
     when demand surges due to favorable weather conditions. The seasonal pattern suggests opportunities for strategic operational scaling.
     """)
     
-    # Enhanced Insights Section
+    # Insights Section
     st.markdown("---")
-    st.markdown("### 🔍 Key Insights")
+    st.markdown("### Key Insights")
     
     col5, col6 = st.columns(2)
     
     with col5:
         st.markdown(f"""
-        **🌡️ Temperature Impact:**
+        **Temperature Impact:**
         - Strong positive correlation (r = {correlation:.3f}) between temperature and bike usage
         - Optimal temperature range: 65°F - 80°F for maximum ridership
         - Significant usage drop below 45°F (-40% from peak)
@@ -356,13 +359,13 @@ elif page == "Weather Impact Analysis":
     
     with col6:
         st.markdown("""
-        **📈 Seasonal Patterns:**
-        - **High season**: May through October (orange highlight)
-        - **Shoulder seasons**: April and November  
-        - **Low season**: December through March
-        - **Weekend effect**: 20-25% higher usage on weekends
-        - **Peak demand**: July-August, with consistent high usage
-        - **Lowest demand**: January-February winter months
+        **Seasonal Patterns:**
+        - High season: May through October (orange highlight)
+        - Shoulder seasons: April and November  
+        - Low season: December through March
+        - Weekend effect: 20-25% higher usage on weekends
+        - Peak demand: July-August, with consistent high usage
+        - Lowest demand: January-February winter months
         """)
     
     # Strategic Recommendations
@@ -371,16 +374,16 @@ elif page == "Weather Impact Analysis":
     
     st.markdown("""
     **For Operations Planning:**
-    - **Scale inventory** 40-50% during May-October warm season
-    - **Maintain reduced fleet** during November-April cold season  
-    - **Prepare for spring surge** with gradual scaling in March-April
-    - **Implement winter incentives** to boost cold-weather ridership
+    - Scale inventory 40-50% during May-October warm season
+    - Maintain reduced fleet during November-April cold season  
+    - Prepare for spring surge with gradual scaling in March-April
+    - Implement winter incentives to boost cold-weather ridership
     
     **For Demand Management:**
-    - **Dynamic pricing** during peak summer months
-    - **Promotional campaigns** during shoulder seasons
-    - **Weather-based forecasting** for daily operational adjustments
-    - **Weekend capacity planning** for 25% higher demand
+    - Dynamic pricing during peak summer months
+    - Promotional campaigns during shoulder seasons
+    - Weather-based forecasting for daily operational adjustments
+    - Weekend capacity planning for 25% higher demand
     """)
 
 ###############################################################
