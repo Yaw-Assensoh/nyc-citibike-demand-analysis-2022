@@ -44,22 +44,87 @@ def load_dashboard_data():
     # Define base directory relative to script location 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Use exact paths from your file structure
-    data_dir = os.path.join(base_dir, "data/processed")
+    # Try multiple possible locations for data files 
+    possible_paths = [
+        os.path.join(base_dir, "top_20_stations_full.csv"),
+        os.path.join(base_dir, "top_20_stations.csv"),
+        os.path.join(base_dir, "../data/processed/top_20_stations_full.csv"),
+        os.path.join(base_dir, "../data/processed/top_20_stations.csv"),
+        os.path.join(base_dir, "data/processed/top_20_stations_full.csv"),
+        os.path.join(base_dir, "data/processed/top_20_stations.csv"),
+    ]
     
     top_stations = None
     daily_data = None
     
-    # Load top stations data
-    top_stations_path = os.path.join(data_dir, "top_20_stations.csv")
-    if os.path.exists(top_stations_path):
-        top_stations = pd.read_csv(top_stations_path)
+    # Find and load top_stations
+    for path in possible_paths:
+        if os.path.exists(path):
+            top_stations = pd.read_csv(path)
+            break
     
-    # Load daily data
-    daily_data_path = os.path.join(data_dir, "daily_aggregated_data.csv")
-    if os.path.exists(daily_data_path):
-        daily_data = pd.read_csv(daily_data_path)
-        daily_data['date'] = pd.to_datetime(daily_data['date'])
+    # Try multiple possible locations for daily data
+    daily_paths = [
+        os.path.join(base_dir, "daily_aggregated_data_full.csv"),
+        os.path.join(base_dir, "daily_aggregated_data.csv"),
+        os.path.join(base_dir, "../data/processed/daily_aggregated_data_full.csv"),
+        os.path.join(base_dir, "../data/processed/daily_aggregated_data.csv"),
+        os.path.join(base_dir, "data/processed/daily_aggregated_data_full.csv"),
+        os.path.join(base_dir, "data/processed/daily_aggregated_data.csv"),
+    ]
+    
+    # Find and load daily_data
+    for path in daily_paths:
+        if os.path.exists(path):
+            daily_data = pd.read_csv(path)
+            daily_data['date'] = pd.to_datetime(daily_data['date'])
+            break
+    
+    # If files not found, create sample data
+    if top_stations is None or daily_data is None:
+        st.sidebar.warning("Using sample data - CSV files not found in expected locations")
+        return create_sample_data()
+    
+    return top_stations, daily_data
+
+def create_sample_data():
+    """Create sample data for demonstration"""
+    # Sample top stations based on actual data - FIXED: Now includes 20 stations
+    stations = [
+        'W 21 St & 6 Ave', 'West St & Chambers St', 'Broadway & W 58 St',
+        '6 Ave & W 33 St', '1 Ave & E 68 St', 'Broadway & E 14 St',
+        'Broadway & W 25 St', 'University Pl & E 14 St', 'Broadway & E 21 St',
+        'W 31 St & 7 Ave', 'E 33 St & 1 Ave', 'Cleveland Pl & Spring St',
+        '12 Ave & W 40 St', '6 Ave & W 34 St', 'West St & Liberty St',
+        '11 Ave & W 41 St', 'Lafayette St & E 8 St', 'Central Park S & 6 Ave',
+        'E 40 St & Park Ave', '8 Ave & W 33 St'
+    ]
+    trip_counts = [129018, 128456, 127890, 126543, 125678, 124321, 123456, 122890, 121234, 120567,
+                   119876, 119123, 118456, 117890, 117123, 116456, 115789, 115123, 114456, 113789]
+    
+    top_stations = pd.DataFrame({
+        'start_station_name': stations,
+        'trip_count': trip_counts
+    })
+    
+    # Sample daily data
+    dates = pd.date_range('2021-01-30', '2022-12-31', freq='D')
+    base_trips = 80000
+    seasonal_variation = np.sin(2 * np.pi * (dates.dayofyear / 365)) * 20000
+    random_noise = np.random.normal(0, 5000, len(dates))
+    daily_trips = (base_trips + seasonal_variation + random_noise).astype(int)
+    
+    # Create realistic temperature data
+    monthly_temps = {1: 32, 2: 35, 3: 42, 4: 53, 5: 63, 6: 72, 
+                     7: 77, 8: 76, 9: 68, 10: 57, 11: 48, 12: 38}
+    base_temp = [monthly_temps[date.month] for date in dates]
+    temperature = base_temp + np.random.normal(0, 5, len(dates))
+    
+    daily_data = pd.DataFrame({
+        'date': dates,
+        'daily_trips': daily_trips,
+        'temperature': temperature
+    })
     
     return top_stations, daily_data
 
@@ -68,10 +133,9 @@ with st.spinner('Loading dashboard data...'):
     top_stations, daily_data = load_dashboard_data()
 
 # Display data metrics in sidebar
-if top_stations is not None and daily_data is not None:
-    st.sidebar.metric("Total Stations Analyzed", len(top_stations))
-    st.sidebar.metric("Date Range", f"{daily_data['date'].min().date()} to {daily_data['date'].max().date()}")
-    st.sidebar.metric("Peak Daily Trips", f"{daily_data['daily_trips'].max():,}")
+st.sidebar.metric("Total Stations Analyzed", len(top_stations))
+st.sidebar.metric("Date Range", f"{daily_data['date'].min().date()} to {daily_data['date'].max().date()}")
+st.sidebar.metric("Peak Daily Trips", f"{daily_data['daily_trips'].max():,}")
 
 ###############################################################
 # INTRODUCTION PAGE
@@ -176,30 +240,20 @@ elif page == "Most Popular Stations":
     st.markdown("### Top 20 Most Popular Stations Analysis")
     
     if top_stations is not None:
-        # SEASON FILTER ON THE LEFT SIDEBAR
-        st.sidebar.header("Season Filter")
-        selected_seasons = st.sidebar.multiselect(
-            "Select seasons to display:",
-            ["Winter", "Spring", "Summer", "Fall"],
-            default=["Winter", "Spring", "Summer", "Fall"]
-        )
-        
         # Display metrics
         total_rides = top_stations['trip_count'].sum()
-        st.metric("Total Rides", f"{total_rides:,}")
-        st.write(f"Showing data for: {', '.join(selected_seasons)}")
+        st.metric("Total Rides in Selection", f"{total_rides:,}")
         
         # Create bar chart 
         fig_bar = go.Figure(go.Bar(
             x=top_stations['start_station_name'],
             y=top_stations['trip_count'],
             marker_color=top_stations['trip_count'],
-            marker_colorscale='Blues',
-            hovertemplate='<b>%{x}</b><br>Trips: %{y:,}<extra></extra>'
+            marker_colorscale='Blues'
         ))
         
         fig_bar.update_layout(
-            title=f"Top 20 Most Popular Bike Stations",
+            title="Top 20 Most Popular Bike Stations",
             xaxis_title='Start Stations',
             yaxis_title='Number of Trips',
             height=500,
@@ -226,59 +280,63 @@ elif page == "Most Popular Stations":
         st.error("Unable to load data for station analysis")
 
 ###############################################################
-# INTERACTIVE MAP PAGE
+# INTERACTIVE MAP PAGE - UPDATED PATHS
 ###############################################################
 
 elif page == "Interactive Map with Aggregated Bike Trips":
     st.title("Interactive Map with Aggregated Bike Trips")
     st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
 
-    # FIXED MAP PATH - Pointing to your notebooks folder
+    # Try to load the map from multiple possible locations
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         map_paths = [
-            os.path.join(base_dir, "../notebooks/nyc_bike_trips_aggregated.html"),  # Your actual map location
-            os.path.join(base_dir, "notebooks/nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "maps/nyc_bike_trips_aggregated.html"),  # Your actual path
+            os.path.join(base_dir, "../maps/nyc_bike_trips_aggregated.html"),
             os.path.join(base_dir, "nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "../notebooks/nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "notebooks/nyc_bike_trips_aggregated.html"),
         ]
         
         html_content = None
-        map_found = False
+        found_path = None
         
         for map_path in map_paths:
             if os.path.exists(map_path):
-                try:
-                    with open(map_path, 'r', encoding='utf-8') as f:
-                        html_content = f.read()
-                    st.sidebar.success(f"Map found: {os.path.basename(map_path)}")
-                    map_found = True
-                    break
-                except Exception as e:
-                    st.sidebar.warning(f"Could not read: {map_path}")
-                    continue
+                with open(map_path, 'r', encoding='utf-8') as f:
+                    html_content = f.read()
+                found_path = map_path
+                break
         
-        if html_content and map_found:
-            st.components.v1.html(html_content, height=600, scrolling=True)
-            st.success("✅ Interactive map loaded successfully!")
+        if html_content:
+            st.success(f"✅ Map loaded successfully from: {os.path.basename(os.path.dirname(found_path))}/")
+            st.components.v1.html(html_content, height=600)
         else:
-            st.error("""
-            **Map Not Found on Streamlit Cloud**
+            st.error("❌ Map file not found in any of the expected locations")
             
-            For Streamlit deployment, you need to:
-            1. Ensure the map file is in your GitHub repository
-            2. Add it to the notebooks folder in your repo
-            3. The path should be: `notebooks/nyc_bike_trips_aggregated.html`
+            # Show debug information
+            st.info("**Debug Information:**")
+            st.write(f"Current script directory: `{base_dir}`")
+            st.write("**Checked these locations:**")
+            for i, path in enumerate(map_paths, 1):
+                exists = "✅ EXISTS" if os.path.exists(path) else "❌ NOT FOUND"
+                st.write(f"{i}. `{path}` - {exists}")
             
-            **Current map search paths attempted:**
-            - `../notebooks/nyc_bike_trips_aggregated.html`
-            - `notebooks/nyc_bike_trips_aggregated.html` 
-            - `nyc_bike_trips_aggregated.html`
+            st.info("""
+            **To fix this:**
+            1. Make sure `nyc_bike_trips_aggregated.html` is in your `maps` folder
+            2. Push the file to GitHub using VS Code:
+               - Open Source Control panel (Ctrl+Shift+G)
+               - Stage the HTML file  
+               - Commit with message "Add map file"
+               - Push to GitHub
+            3. Verify the file appears in your GitHub repository
             """)
         
     except Exception as e:
         st.error(f"Error loading map: {str(e)}")
-        st.info("The dashboard charts are still fully functional.")
-    
+        st.info("If the file is large, consider using GitHub LFS or compressing the HTML file.")
+
     # Interpretation section (REQUIRED)
     st.markdown("""
     ### Interpretation of Findings
