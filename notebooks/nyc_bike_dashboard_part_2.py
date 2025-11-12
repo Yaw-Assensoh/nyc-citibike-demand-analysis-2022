@@ -212,7 +212,7 @@ if page == "Introduction":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS PAGE 
+# WEATHER IMPACT ANALYSIS PAGE - SIMPLE DUAL AXIS LINE CHART
 ###############################################################
 
 elif page == "Weather Impact Analysis":
@@ -245,42 +245,46 @@ elif page == "Weather Impact Analysis":
         correlation = display_data['daily_trips'].corr(display_data['temperature'])
         st.metric("Temperature Correlation", f"{correlation:.3f}")
     
-    # Main visualization - SIMPLE DUAL AXIS LINE CHART
+    # Main visualization - SIMPLE DUAL AXIS LINE CHART (EXACTLY LIKE YOUR EXAMPLE)
     st.markdown("---")
-    st.markdown('<div class="section-header">Daily Bike Trips vs Temperature</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Daily Trips vs Temperature</div>', unsafe_allow_html=True)
     
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig_line = make_subplots(specs=[[{"secondary_y": True}]])
     
     # Daily trips trace
-    fig.add_trace(
+    fig_line.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['daily_trips'],
             name='Daily Bike Trips',
-            line=dict(color='#1f77b4', width=2)
+            line=dict(color='#1f77b4', width=3),
+            hovertemplate='<b>Date: %{x}</b><br>Trips: %{y:,}<extra></extra>'
         ),
         secondary_y=False
     )
     
     # Temperature trace
-    fig.add_trace(
+    fig_line.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['temperature'],
-            name='Temperature (°F)',
-            line=dict(color='#ff7f0e', width=2)
+            name='Average Temperature (°F)',
+            line=dict(color='#ff7f0e', width=2),
+            hovertemplate='<b>Date: %{x}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
         ),
         secondary_y=True
     )
     
-    fig.update_layout(
-        height=500
+    fig_line.update_layout(
+        height=500,
+        template='plotly_white',
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     
-    fig.update_yaxes(title_text="Daily Trips", secondary_y=False)
-    fig.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
+    fig_line.update_yaxes(title_text="Daily Trips", secondary_y=False)
+    fig_line.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig_line, use_container_width=True)
     
     # Insights Section
     st.markdown("---")
@@ -299,7 +303,7 @@ elif page == "Weather Impact Analysis":
     - Low season: December through March
     - Weekend effect: 20% higher usage on weekends
     """)
-
+    
 ###############################################################
 # MOST POPULAR STATIONS PAGE 
 ###############################################################
