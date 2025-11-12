@@ -367,7 +367,7 @@ elif page == "Weather Impact Analysis":
     
     # Strategic Recommendations
     st.markdown("---")
-    st.markdown("### 💡 Strategic Recommendations")
+    st.markdown("### Strategic Recommendations")
     
     st.markdown("""
     **For Operations Planning:**
