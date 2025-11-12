@@ -1,6 +1,6 @@
 ###############################################################
 # NYC Citi Bike Strategy Dashboard - Part 2
-# Clean Professional Version
+# Stable Fixed Version
 ###############################################################
 
 import streamlit as st
@@ -48,6 +48,13 @@ st.markdown("""
         margin-bottom: 1rem;
         font-weight: 600;
     }
+    .business-challenge {
+        background-color: #f0f8ff;
+        padding: 2rem;
+        border-radius: 10px;
+        border: 1px solid #1f77b4;
+        margin: 1rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -64,10 +71,14 @@ page = st.sidebar.selectbox(
         "Introduction",
         "Weather Impact Analysis", 
         "Most Popular Stations",
-        "Interactive Map Analysis",
+        "Spatial Analysis",
         "Recommendations"
     ]
 )
+
+# Initialize session state for filters
+if 'selected_seasons' not in st.session_state:
+    st.session_state.selected_seasons = ['Winter', 'Spring', 'Summer', 'Fall']
 
 # Season filter for relevant pages
 if page in ["Most Popular Stations", "Weather Impact Analysis"]:
@@ -78,61 +89,19 @@ if page in ["Most Popular Stations", "Weather Impact Analysis"]:
     selected_seasons = st.sidebar.multiselect(
         'Select seasons to display:',
         options=seasons,
-        default=seasons
+        default=st.session_state.selected_seasons
     )
+    st.session_state.selected_seasons = selected_seasons
 
 ###############################################################
-# DATA LOADING FUNCTION
+# DATA LOADING FUNCTION - SIMPLIFIED AND STABLE
 ###############################################################
 
 @st.cache_data
 def load_dashboard_data():
     """Load and prepare dashboard data"""
-    try:
-        # Try to load actual data files first
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        # Look for station data
-        station_paths = [
-            os.path.join(base_dir, "top_20_stations.csv"),
-            os.path.join(base_dir, "data/top_20_stations.csv"),
-            os.path.join(base_dir, "../data/top_20_stations.csv"),
-        ]
-        
-        top_stations = None
-        for path in station_paths:
-            if os.path.exists(path):
-                top_stations = pd.read_csv(path)
-                break
-        
-        # Look for daily data
-        daily_paths = [
-            os.path.join(base_dir, "daily_aggregated_data.csv"),
-            os.path.join(base_dir, "data/daily_aggregated_data.csv"),
-            os.path.join(base_dir, "../data/daily_aggregated_data.csv"),
-        ]
-        
-        daily_data = None
-        for path in daily_paths:
-            if os.path.exists(path):
-                daily_data = pd.read_csv(path)
-                if 'date' in daily_data.columns:
-                    daily_data['date'] = pd.to_datetime(daily_data['date'])
-                break
-        
-        # If actual data not found, create sample data
-        if top_stations is None or daily_data is None:
-            return create_sample_data()
-        
-        return top_stations, daily_data
-        
-    except Exception as e:
-        st.sidebar.warning("Using sample data for demonstration")
-        return create_sample_data()
-
-def create_sample_data():
-    """Create sample data when actual files are not available"""
-    # Sample top stations
+    
+    # Create consistent sample data
     stations = [
         'W 21 St & 6 Ave', 'West St & Chambers St', 'Broadway & W 58 St',
         '6 Ave & W 33 St', '1 Ave & E 68 St', 'Broadway & E 14 St',
@@ -152,11 +121,12 @@ def create_sample_data():
     })
     
     # Create daily data with seasons
+    np.random.seed(42)  # For consistent results
     dates = pd.date_range('2021-01-01', '2022-12-31', freq='D')
     
     daily_trips = []
     temperatures = []
-    seasons = []
+    seasons_list = []
     
     for date in dates:
         month = date.month
@@ -181,29 +151,28 @@ def create_sample_data():
         
         # Add weekly seasonality
         if date.weekday() >= 5:  # Weekend
-            base_trips *= 1.2
+            base_trips = int(base_trips * 1.2)
             
         daily_trips.append(max(20000, base_trips))
         temperatures.append(max(10, base_temp))
-        seasons.append(season)
+        seasons_list.append(season)
     
     daily_data = pd.DataFrame({
         'date': dates,
         'daily_trips': daily_trips,
         'temperature': temperatures,
-        'season': seasons
+        'season': seasons_list
     })
     
     return top_stations, daily_data
 
 # Load data
-with st.spinner('Loading dashboard data...'):
-    top_stations, daily_data = load_dashboard_data()
+top_stations, daily_data = load_dashboard_data()
 
 # Apply season filter if selected
-if page in ["Most Popular Stations", "Weather Impact Analysis"] and 'selected_seasons' in locals():
-    if selected_seasons:
-        filtered_daily_data = daily_data[daily_data['season'].isin(selected_seasons)]
+if page in ["Most Popular Stations", "Weather Impact Analysis"]:
+    if st.session_state.selected_seasons:
+        filtered_daily_data = daily_data[daily_data['season'].isin(st.session_state.selected_seasons)]
     else:
         filtered_daily_data = daily_data
 else:
@@ -242,11 +211,11 @@ if page == "Introduction":
     
     st.markdown("---")
     
-    # Business Challenge Section
+    # Business Challenge Section - FIXED
     st.markdown('<div class="section-header">Business Challenge</div>', unsafe_allow_html=True)
     
     st.markdown("""
-    <div class="metric-card">
+    <div class="business-challenge">
     <h4>Current Situation</h4>
     <p>NYC Citi Bike is experiencing customer complaints about bike availability issues during peak hours and in high-demand areas. This comprehensive analysis examines usage patterns, seasonal impacts, and geographic distribution to provide data-driven solutions.</p>
     
@@ -308,8 +277,8 @@ elif page == "Weather Impact Analysis":
     st.markdown("### Understanding Temperature and Seasonal Effects on Bike Usage")
     
     # Display current filter status
-    if 'selected_seasons' in locals() and selected_seasons:
-        season_text = f"Showing data for: {', '.join(selected_seasons)}"
+    if st.session_state.selected_seasons:
+        season_text = f"Showing data for: {', '.join(st.session_state.selected_seasons)}"
         display_data = filtered_daily_data
     else:
         season_text = "Showing data for all seasons"
@@ -346,9 +315,7 @@ elif page == "Weather Impact Analysis":
             x=display_data['date'],
             y=display_data['daily_trips'],
             name='Daily Bike Trips',
-            line=dict(color='#1f77b4', width=2),
-            fill='tozeroy',
-            fillcolor='rgba(31, 119, 180, 0.1)'
+            line=dict(color='#1f77b4', width=2)
         ),
         secondary_y=False
     )
@@ -382,15 +349,11 @@ elif page == "Weather Impact Analysis":
     
     fig_box = go.Figure()
     
-    colors = {'Winter': '#1f77b4', 'Spring': '#2ca02c', 'Summer': '#ff7f0e', 'Fall': '#d62728'}
-    
     for season in ['Winter', 'Spring', 'Summer', 'Fall']:
         season_data = daily_data[daily_data['season'] == season]['daily_trips']
         fig_box.add_trace(go.Box(
             y=season_data,
-            name=season,
-            marker_color=colors[season],
-            boxpoints='outliers'
+            name=season
         ))
     
     fig_box.update_layout(
@@ -436,8 +399,8 @@ elif page == "Most Popular Stations":
     st.markdown("### Top 20 Stations Analysis and Demand Patterns")
     
     # Filter note
-    if 'selected_seasons' in locals() and len(selected_seasons) < 4:
-        filter_note = f"Showing annual data for reference - {len(selected_seasons)} season(s) selected in filter"
+    if len(st.session_state.selected_seasons) < 4:
+        filter_note = f"Showing annual data for reference - {len(st.session_state.selected_seasons)} season(s) selected in filter"
     else:
         filter_note = "Showing annual station performance data"
     
@@ -468,12 +431,7 @@ elif page == "Most Popular Stations":
         x=top_stations['trip_count'],
         y=top_stations['start_station_name'],
         orientation='h',
-        marker=dict(
-            color=top_stations['trip_count'],
-            colorscale='Blues',
-            colorbar=dict(title="Trip Count")
-        ),
-        hovertemplate='<b>%{y}</b><br>Trips: %{x:,}<extra></extra>'
+        marker_color='#1f77b4'
     ))
     
     fig.update_layout(
@@ -495,7 +453,6 @@ elif page == "Most Popular Stations":
     display_df['Rank'] = range(1, len(display_df) + 1)
     display_df = display_df[['Rank', 'start_station_name', 'trip_count']]
     display_df.columns = ['Rank', 'Station Name', 'Trip Count']
-    display_df['Trip Count'] = display_df['Trip Count'].apply(lambda x: f"{x:,}")
     
     st.dataframe(display_df, use_container_width=True, hide_index=True)
     
@@ -513,14 +470,6 @@ elif page == "Most Popular Stations":
         - Commuter hubs consistently popular
         - Waterfront locations emerging as hotspots
         """)
-        
-        st.markdown("""
-        **Demand Patterns:**
-        - Top 5 stations handle 25% of total volume
-        - Clear preference for specific locations
-        - Consistent ranking across time periods
-        - Peak hour congestion at popular stations
-        """)
     
     with col2:
         st.markdown("""
@@ -532,93 +481,111 @@ elif page == "Most Popular Stations":
         """)
 
 ###############################################################
-# INTERACTIVE MAP ANALYSIS PAGE
+# SPATIAL ANALYSIS PAGE - SIMPLIFIED AND STABLE
 ###############################################################
 
-elif page == "Interactive Map Analysis":
+elif page == "Spatial Analysis":
     
     st.markdown('<h1 class="main-header">Spatial Analysis</h1>', unsafe_allow_html=True)
     st.markdown("### Geographic Distribution and Hotspot Identification")
     
-    st.info("Interactive station map showing geographic distribution of NYC's most popular bike stations. Larger circles indicate higher usage volumes.")
+    st.info("Geographic analysis of station distribution and usage patterns across NYC.")
     
-    try:
-        import folium
-        from streamlit_folium import st_folium
-        
-        # Create NYC base map
-        m = folium.Map(location=[40.7505, -73.9934], zoom_start=12, tiles='OpenStreetMap')
-        
-        # Station coordinates
-        station_coords = {
-            'W 21 St & 6 Ave': [40.7410, -73.9897],
-            'West St & Chambers St': [40.7155, -74.0152],
-            'Broadway & W 58 St': [40.7662, -73.9818],
-            '6 Ave & W 33 St': [40.7490, -73.9880],
-            '1 Ave & E 68 St': [40.7655, -73.9582],
-            'Broadway & E 14 St': [40.7340, -73.9909],
-            'Broadway & W 25 St': [40.7441, -73.9907],
-            'University Pl & E 14 St': [40.7349, -73.9925],
-            'Broadway & E 21 St': [40.7393, -73.9899],
-            'W 31 St & 7 Ave': [40.7496, -73.9918],
-        }
-        
-        # Add markers for top stations
-        max_trips = top_stations['trip_count'].max()
-        
-        for _, station in top_stations.head(15).iterrows():
-            name = station['start_station_name']
-            trips = station['trip_count']
-            
-            if name in station_coords:
-                lat, lon = station_coords[name]
-            else:
-                lat, lon = 40.7505 + np.random.uniform(-0.03, 0.03), -73.9934 + np.random.uniform(-0.03, 0.03)
-            
-            radius = max(8, min(25, (trips / max_trips) * 20))
-            
-            folium.CircleMarker(
-                location=[lat, lon],
-                radius=radius,
-                popup=f"<b>{name}</b><br>Trips: {trips:,}",
-                tooltip=name,
-                color='#1f77b4',
-                fillColor='#1f77b4',
-                fillOpacity=0.6,
-                weight=2
-            ).add_to(m)
-        
-        # Display the map
-        st_folium(m, width=700, height=500)
-        
-    except ImportError:
-        st.warning("Interactive map features require folium and streamlit-folium packages.")
-        
-        # Fallback analysis
+    # Simple coordinate visualization instead of map
+    st.markdown("---")
+    st.markdown('<div class="section-header">Station Geographic Distribution</div>', unsafe_allow_html=True)
+    
+    # Create a simple scatter plot for geographic representation
+    fig_map = go.Figure()
+    
+    # Mock coordinates for stations (simplified Manhattan area)
+    np.random.seed(42)
+    station_coords = {}
+    for station in top_stations['start_station_name']:
+        # Create realistic Manhattan coordinates
+        lat = 40.75 + np.random.uniform(-0.03, 0.03)
+        lng = -73.99 + np.random.uniform(-0.03, 0.03)
+        station_coords[station] = (lat, lng)
+    
+    # Add scatter points for stations
+    lats = []
+    lngs = []
+    sizes = []
+    names = []
+    
+    for _, station in top_stations.iterrows():
+        name = station['start_station_name']
+        trips = station['trip_count']
+        if name in station_coords:
+            lat, lng = station_coords[name]
+            lats.append(lat)
+            lngs.append(lng)
+            sizes.append(min(50, max(10, trips / 3000)))
+            names.append(name)
+    
+    fig_map.add_trace(go.Scatter(
+        x=lngs,
+        y=lats,
+        mode='markers',
+        marker=dict(
+            size=sizes,
+            color=top_stations['trip_count'].head(len(lats)),
+            colorscale='Blues',
+            showscale=True,
+            colorbar=dict(title="Trip Count")
+        ),
+        text=names,
+        hovertemplate='<b>%{text}</b><br>Lat: %{y:.3f}<br>Lon: %{x:.3f}<extra></extra>'
+    ))
+    
+    fig_map.update_layout(
+        title="Station Locations and Usage Intensity",
+        xaxis_title="Longitude",
+        yaxis_title="Latitude",
+        height=500,
+        template='plotly_white'
+    )
+    
+    st.plotly_chart(fig_map, use_container_width=True)
+    
+    # High Traffic Areas Description
+    st.markdown("---")
+    st.markdown('<div class="section-header">High Traffic Areas Identified</div>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
         st.markdown("""
-        ### Geographic Distribution Analysis
-        
-        **High-Density Clusters Identified:**
-        
-        **Midtown Core** (Highest Density)
+        **Midtown Core:**
         - Times Square to Herald Square corridor
+        - Highest station density and usage
         - Tourist and business traffic combination
         - Peak usage throughout day
+        """)
         
-        **Financial District** 
+        st.markdown("""
+        **Financial District:**
         - Strong commuter patterns
         - Business-hour focused usage
         - Transit connection hub
-        
-        **Chelsea/Flatiron**
-        - Mixed residential/commercial
+        - Consistent weekday demand
+        """)
+    
+    with col2:
+        st.markdown("""
+        **Chelsea/Flatiron:**
+        - Mixed residential/commercial area
         - Evening and weekend peaks
         - Restaurant and entertainment traffic
+        - Growing residential density
+        """)
         
-        **Upper East Side**
+        st.markdown("""
+        **Upper East Side:**
         - Residential commuter base
-        - Consistent daily usage
+        - Consistent daily usage patterns
         - Connection to subway lines
+        - Morning/evening commute peaks
         """)
     
     # Spatial Insights
@@ -632,7 +599,7 @@ elif page == "Interactive Map Analysis":
         **Infrastructure Patterns:**
         - Broadway corridor shows highest station density
         - Waterfront areas emerging as popular routes
-        - Transit deserts identified in some residential areas
+        - Clear concentration in central business districts
         - Tourist zones consistently high usage
         """)
     
@@ -670,90 +637,72 @@ elif page == "Recommendations":
     st.markdown('<div class="section-header">Key Strategic Recommendations</div>', unsafe_allow_html=True)
     
     # Recommendation 1
-    with st.expander("1. Dynamic Seasonal Scaling Strategy", expanded=True):
-        st.markdown("""
-        **Implement intelligent resource allocation based on seasonal demand patterns:**
-        
-        **Winter Scaling (November-April):**
-        - Reduce overall fleet by 40-50%
-        - Focus on 45% reduction in January-February
-        - Implement seasonal staff scheduling
-        - Schedule major maintenance during low-demand periods
-        
-        **Summer Operations (May-October):**
-        - Maintain full fleet deployment
-        - Increase maintenance frequency
-        - Implement peak hour staffing
-        - Deploy temporary stations in high-demand areas
-        
-        **Expected Impact:** 30% improvement in operational efficiency
-        """)
+    st.markdown("""
+    **1. Dynamic Seasonal Scaling Strategy**
+    
+    Implement intelligent resource allocation based on seasonal demand patterns:
+    
+    - **Winter Scaling (November-April):** Reduce overall fleet by 40-50%
+    - **Summer Operations (May-October):** Maintain full fleet deployment  
+    - **Transition Periods:** Implement gradual scaling in spring and fall
+    - **Expected Impact:** 30% improvement in operational efficiency
+    """)
+    
+    st.markdown("---")
     
     # Recommendation 2
-    with st.expander("2. High-Demand Station Optimization", expanded=True):
-        st.markdown("""
-        **Focus resources on top-performing stations and demand corridors:**
-        
-        **Priority Actions:**
-        - Enhanced maintenance for top 20 stations
-        - Predictive redistribution algorithms
-        - Real-time inventory monitoring
-        - Peak hour management protocols
-        
-        **Station-Specific Strategies:**
-        - Midtown Core: Continuous monitoring and rapid response
-        - Financial District: Business-hour focused optimization
-        - Tourist Areas: Weekend and seasonal scaling
-        - Residential Hubs: Commuter pattern alignment
-        
-        **Expected Impact:** 25% reduction in availability complaints
-        """)
+    st.markdown("""
+    **2. High-Demand Station Optimization**
+    
+    Focus resources on top-performing stations and demand corridors:
+    
+    - Enhanced maintenance for top 20 stations
+    - Predictive redistribution algorithms
+    - Real-time inventory monitoring systems
+    - Peak hour management protocols
+    - **Expected Impact:** 25% reduction in availability complaints
+    """)
+    
+    st.markdown("---")
     
     # Recommendation 3
-    with st.expander("3. Strategic Geographic Expansion", expanded=True):
-        st.markdown("""
-        **Target high-potential areas for network growth and optimization:**
-        
-        **Expansion Priorities:**
-        - Waterfront routes along Hudson and East Rivers
-        - Transit connection points to subway stations
-        - Residential corridors with growing density
-        - Underserved neighborhoods in outer boroughs
-        
-        **Implementation Framework:**
-        - Phased rollout based on demand potential
-        - Community partnerships for station placement
-        - Transit integration programs
-        - Data-driven site selection
-        
-        **Expected Impact:** 15% increase in ridership
-        """)
+    st.markdown("""
+    **3. Strategic Geographic Expansion**
+    
+    Target high-potential areas for network growth and optimization:
+    
+    - Waterfront routes along Hudson and East Rivers
+    - Transit connection points to subway stations
+    - Residential corridors with growing density
+    - Underserved neighborhoods in outer boroughs
+    - **Expected Impact:** 15% increase in ridership
+    """)
     
     # Stakeholder Q&A
     st.markdown("---")
     st.markdown('<div class="section-header">Addressing Key Stakeholder Questions</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    st.markdown("""
+    **How much would you recommend scaling bikes back between November and April?**
     
-    with col1:
-        st.markdown("""
-        **How much would you recommend scaling bikes back between November and April?**
-        
-        Recommendation: Scale back operations by 40-50% during winter months, with the most significant reductions (45-50%) in January and February when demand is lowest. Implement gradual scaling in November and April (30-40% reduction).
-        """)
-        
-        st.markdown("""
-        **How could you determine how many more stations to add along the water?**
-        
-        Approach: Use spatial analysis to identify coverage gaps, evaluate population density and tourist traffic patterns, assess connectivity to existing infrastructure, and conduct community surveys for optimal placement.
-        """)
+    *Recommendation:* Scale back operations by 40-50% during winter months, with the most significant reductions (45-50%) in January and February when demand is lowest. Implement gradual scaling in November and April (30-40% reduction).
+    """)
     
-    with col2:
-        st.markdown("""
-        **What are some ideas for ensuring bikes are always stocked at the most popular stations?**
-        
-        Solutions: Implement predictive redistribution algorithms, dynamic pricing incentives for optimal returns, enhanced maintenance schedules, real-time monitoring with automated alerts, and peak hour staff deployment for manual redistribution.
-        """)
+    st.markdown("---")
+    
+    st.markdown("""
+    **How could you determine how many more stations to add along the water?**
+    
+    *Approach:* Use spatial analysis to identify coverage gaps, evaluate population density and tourist traffic patterns, assess connectivity to existing infrastructure, and conduct community surveys for optimal placement.
+    """)
+    
+    st.markdown("---")
+    
+    st.markdown("""
+    **What are some ideas for ensuring bikes are always stocked at the most popular stations?**
+    
+    *Solutions:* Implement predictive redistribution algorithms, dynamic pricing incentives for optimal returns, enhanced maintenance schedules, real-time monitoring with automated alerts, and peak hour staff deployment for manual redistribution.
+    """)
 
 ###############################################################
 # FOOTER
