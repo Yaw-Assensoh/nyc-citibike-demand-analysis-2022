@@ -236,16 +236,4 @@ notebooks/checkpoints
 notebooks/data/checkpoints
 
 pyarrow-env
-notebooks/nyc_bike_trips_aggregated.html
-notebooks/nyc_bike_trips_aggregated.ipynb
 
-notebooks/nyc_bike_trips_aggregated.html
-notebooks/nyc_bike_trips_aggregated_compressed.html.gz
-notebooks/nyc_bike_trips_aggregated_light.html
-
-notebooks/nyc_bike_trips_aggregated.html
-notebooks/nyc_bike_trips_aggregated_light.html
-notebooks/nyc_bike_trips_aggregated_compressed.html.gz
-notebooks/nyc_bike_trips_aggregated.html
-notebooks/nyc_bike_trips_aggregated_light.html
-notebooks/nyc_bike_trips_aggregated_compressed.html.gz
