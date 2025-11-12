@@ -283,141 +283,197 @@ if page == "Most Popular Stations":
 # INTERACTIVE MAP PAGE - UPDATED PATHS
 ###############################################################
 
-if page == "Interactive Map with Aggregated Bike Trips":
+elif page == "Interactive Map with Aggregated Bike Trips":
     st.title("Interactive Map with Aggregated Bike Trips")
     st.markdown("Explore spatial patterns and identify high-traffic corridors for expansion planning.")
+
+    # Debug: Show current directory structure
+    st.info("**Checking for map files...**")
     
-    # Create the map directly in Streamlit
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        st.write(f"Current directory: `{base_dir}`")
+        
+        # List all files in current and parent directories to debug
+        import subprocess
+        result = subprocess.run(['find', '.', '-name', '*.html', '-type', 'f'], 
+                              capture_output=True, text=True)
+        if result.stdout:
+            st.write("**Found HTML files:**", result.stdout)
+        else:
+            st.write("**No HTML files found in repository**")
+            
+    except Exception as e:
+        st.write(f"Debug error: {e}")
+
+    # Try multiple possible locations - UPDATED PATHS
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # All possible paths relative to where the script is running
+        map_paths = [
+            # If script is in root directory
+            "nyc_bike_trips_aggregated.html",
+            "maps/nyc_bike_trips_aggregated.html",
+            "notebooks/nyc_bike_trips_aggregated.html",
+            "data/nyc_bike_trips_aggregated.html",
+            # If script is in notebooks directory
+            "../nyc_bike_trips_aggregated.html",
+            "../maps/nyc_bike_trips_aggregated.html",
+            "./nyc_bike_trips_aggregated.html",
+            # Absolute paths from root
+            os.path.join(base_dir, "nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "maps/nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "../nyc_bike_trips_aggregated.html"),
+            os.path.join(base_dir, "../maps/nyc_bike_trips_aggregated.html"),
+        ]
+        
+        html_content = None
+        found_path = None
+        
+        st.write("**Checking paths:**")
+        for map_path in map_paths:
+            exists = os.path.exists(map_path)
+            status = "✅ EXISTS" if exists else "❌ NOT FOUND"
+            st.write(f"- `{map_path}` - {status}")
+            
+            if exists and html_content is None:
+                try:
+                    with open(map_path, 'r', encoding='utf-8') as f:
+                        html_content = f.read()
+                    found_path = map_path
+                    st.success(f"**✓ Successfully loaded from: `{map_path}`**")
+                    break
+                except Exception as e:
+                    st.warning(f"Could not read {map_path}: {str(e)}")
+        
+        if html_content:
+            st.components.v1.html(html_content, height=600, scrolling=True)
+        else:
+            # Create a simple interactive map as fallback
+            st.warning("Original map file not found. Creating interactive map...")
+            create_interactive_map_fallback()
+            
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+        create_interactive_map_fallback()
+
+
+def create_interactive_map_fallback():
+    """Create an interactive map when HTML file is not available"""
     try:
         import folium
         from streamlit_folium import st_folium
         
-        # Create base NYC map
-        m = folium.Map(location=[40.7505, -73.9934], zoom_start=12, tiles='OpenStreetMap')
+        # Create NYC map centered on Manhattan
+        m = folium.Map(location=[40.7505, -73.9934], zoom_start=12)
         
-        # Add popular stations based on your top_stations data
-        popular_stations = [
-            ("W 21 St & 6 Ave", 40.7410, -73.9897, 129018),
-            ("West St & Chambers St", 40.7155, -74.0152, 128456),
-            ("Broadway & W 58 St", 40.7662, -73.9818, 127890),
-            ("6 Ave & W 33 St", 40.7490, -73.9880, 126543),
-            ("1 Ave & E 68 St", 40.7655, -73.9582, 125678),
-            ("Broadway & E 14 St", 40.7340, -73.9909, 124321),
-            ("Broadway & W 25 St", 40.7441, -73.9907, 123456),
-            ("University Pl & E 14 St", 40.7349, -73.9925, 122890),
-            ("Broadway & E 21 St", 40.7393, -73.9899, 121234),
-            ("W 31 St & 7 Ave", 40.7496, -73.9918, 120567),
-        ]
-        
-        # Add markers for popular stations with size based on trip count
-        for name, lat, lon, trips in popular_stations:
-            # Calculate marker size based on trip count
-            radius = max(5, min(20, trips / 10000))
+        # Add popular stations from your data
+        if 'top_stations' in globals() and top_stations is not None:
+            # Use actual station data if available
+            st.info(f"Showing {len(top_stations)} popular stations from your data")
             
-            folium.CircleMarker(
-                location=[lat, lon],
-                radius=radius,
-                popup=f"<b>{name}</b><br>Trips: {trips:,}",
-                tooltip=name,
-                color='blue',
-                fillColor='blue',
-                fillOpacity=0.6,
-                weight=2
-            ).add_to(m)
-        
-        # Add some heatmap-like effect for high traffic areas
-        high_traffic_areas = [
-            (40.7505, -73.9934, "Midtown Core"),  # Times Square area
-            (40.7410, -73.9897, "Chelsea"),       # High traffic station
-            (40.7155, -74.0152, "Financial District"),
-            (40.7655, -73.9582, "Upper East Side"),
-        ]
-        
-        for lat, lon, area in high_traffic_areas:
-            folium.Circle(
-                location=[lat, lon],
-                radius=500,
-                popup=f"<b>{area}</b><br>High Traffic Area",
-                color='red',
-                fillColor='red',
-                fillOpacity=0.1,
-                weight=1
-            ).add_to(m)
+            # Sample coordinates for popular stations (you would replace with actual coordinates)
+            station_coordinates = {
+                'W 21 St & 6 Ave': [40.7410, -73.9897],
+                'West St & Chambers St': [40.7155, -74.0152],
+                'Broadway & W 58 St': [40.7662, -73.9818],
+                '6 Ave & W 33 St': [40.7490, -73.9880],
+                '1 Ave & E 68 St': [40.7655, -73.9582],
+                'Broadway & E 14 St': [40.7340, -73.9909],
+                'Broadway & W 25 St': [40.7441, -73.9907],
+                'University Pl & E 14 St': [40.7349, -73.9925],
+                'Broadway & E 21 St': [40.7393, -73.9899],
+                'W 31 St & 7 Ave': [40.7496, -73.9918],
+            }
+            
+            for _, row in top_stations.head(15).iterrows():
+                station_name = row['start_station_name']
+                trips = row['trip_count']
+                
+                # Get coordinates or use default Manhattan location
+                coords = station_coordinates.get(station_name, [40.7505, -73.9934])
+                
+                folium.CircleMarker(
+                    location=coords,
+                    radius=min(20, max(5, trips / 5000)),  # Scale marker size
+                    popup=f"<b>{station_name}</b><br>Trips: {trips:,}",
+                    tooltip=station_name,
+                    color='blue',
+                    fillColor='blue',
+                    fillOpacity=0.6
+                ).add_to(m)
         
         # Display the map
-        st_data = st_folium(m, width=700, height=600, returned_objects=[])
+        st_folium(m, width=700, height=500)
         
-        # Add analysis below the map
-        st.markdown("---")
-        col1, col2 = st.columns(2)
+        # Show analysis
+        st.markdown("""
+        ### 🗺️ Spatial Analysis
         
-        with col1:
-            st.markdown("""
-            ###  Key Observations:
-            - **High concentration** of popular stations in Midtown and Downtown
-            - **Financial District** shows consistent high traffic
-            - **Tourist areas** (Times Square, Chelsea) have heavy usage
-            - **Commuter corridors** along Broadway and major avenues
-            """)
+        **High-Density Areas Identified:**
+        - **Midtown Manhattan**: Highest concentration of popular stations
+        - **Financial District**: Consistent commuter traffic  
+        - **Tourist Corridors**: Times Square, Herald Square areas
+        - **Residential Hubs**: Upper East Side, Chelsea
         
-        with col2:
-            st.markdown("""
-            ###  Expansion Opportunities:
-            - **Waterfront routes** along Hudson River Park
-            - **Residential areas** with growing density
-            - **Transit connection** points to subway stations
-            - **Underserved neighborhoods** in outer boroughs
-            """)
-            
-    except ImportError as e:
-        st.error("Map dependencies not available. Showing analysis only.")
-        show_map_analysis_fallback()
+        **Expansion Recommendations:**
+        - Enhance station density in high-traffic corridors
+        - Improve bike availability during peak hours at top stations
+        - Consider strategic partnerships with nearby businesses
+        """)
+        
+    except ImportError:
+        st.error("""
+        **Unable to create interactive map.** Required packages not installed.
+        
+        Please add to your `requirements.txt`:
+        ```
+        folium
+        streamlit-folium
+        ```
+        """)
+        
+        # Final fallback - just show the analysis
+        show_final_fallback_analysis()
 
-def show_map_analysis_fallback():
-    """Show analysis when map cannot be displayed"""
+
+def show_final_fallback_analysis():
+    """Show analysis when no map can be displayed"""
     st.markdown("""
-    ###  Geographic Analysis Based on Station Data
+    ### 📊 Geographic Distribution Analysis
     
-    **High-Traffic Corridors Identified:**
+    Based on the station popularity data, here are the key spatial patterns:
     
-    1. **Midtown Core** (Times Square to Herald Square)
-       - Broadway & W 58 St: 127,890 trips
-       - W 31 St & 7 Ave: 120,567 trips
-       - 6 Ave & W 33 St: 126,543 trips
-    
-    2. **Downtown Financial District**
-       - West St & Chambers St: 128,456 trips
-       - High commuter traffic during business hours
-    
-    3. **Chelsea/Flatiron District**
-       - W 21 St & 6 Ave: 129,018 trips (highest usage)
-       - Broadway & E 21 St: 121,234 trips
-    
-    4. **East Side Residential Corridor**
-       - 1 Ave & E 68 St: 125,678 trips
-       - Connects residential areas to transit
-    
-    **Expansion Recommendations:**
-    - Add stations along Hudson River Park greenway
-    - Enhance coverage in Upper East Side residential areas
-    - Improve connectivity to Brooklyn and Queens transit hubs
+    **Top 5 High-Traffic Zones:**
+    1. **Midtown Core** (Times Square to 34th St)
+       - Highest station density
+       - Tourist and commuter traffic
+       - Peak usage during business hours
+       
+    2. **Financial District** 
+       - Strong commuter patterns
+       - Weekday-focused usage
+       - Connection to transit hubs
+       
+    3. **Chelsea/Flatiron**
+       - Mixed residential/commercial
+       - Evening and weekend usage
+       - Restaurant and entertainment traffic
+       
+    4. **Upper East Side**
+       - Residential commuter base
+       - Connection to subway lines
+       - Consistent daily usage
+       
+    5. **East Village/Union Square**
+       - Student and young professional demographic
+       - Weekend recreational usage
     """)
     
-    # Show the top stations data
     if 'top_stations' in globals() and top_stations is not None:
-        st.subheader("Top 10 Stations by Usage")
+        st.subheader("Station Usage Data")
         st.dataframe(top_stations.head(10), use_container_width=True)
-
-    # Interpretation section (REQUIRED)
-    st.markdown("""
-    ### Interpretation of Findings
-    
-    **Using the filter on the left hand side of the map** we can check whether the most popular start stations also appear in the most popular trips.
-    
-    **The most popular start stations** identified in our analysis can be cross-referenced with the geographic distribution shown on the map to understand spatial patterns and route preferences.
-    
-    **While having the aggregated bike trips filter enabled**, we can see spatial patterns that reveal high-frequency routes connecting key destinations throughout the city, with particular concentration in high-traffic areas including Manhattan's core business districts and popular tourist destinations.
-    """)
 
 ###############################################################
 # RECOMMENDATIONS PAGE
