@@ -427,31 +427,21 @@ elif page == "Most Popular Stations":
 # WEATHER IMPACT ANALYSIS PAGE
 ###############################################################
 
-elif page == "Weather Impact Analysis":
-    
-    fig_2 = make_subplots(specs=[[{"secondary_y": True}]])
+elif page == 'Weather component and bike usage':
 
-    fig_2.add_trace(
-        go.Scatter(
-            x=daily_data['date'],
-            y=daily_data['daily_trips'],
-            mode='lines',
-            name='Daily Trips',
-            line=dict(color='blue', width=2)
-        ),
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig.add_trace(
+        go.Scatter(x=daily_data['date'], y=daily_data['daily_trips'], name='Daily bike rides'),
         secondary_y=False
     )
 
-    fig_2.add_trace(
-        go.Scatter(
-            x=daily_data['date'],
-            y=daily_data['temperature'],
-            mode='lines',
-            name='Temperature (°F)',
-            line=dict(color='orange', width=2)
-        ),
+    fig.add_trace(
+        go.Scatter(x=daily_data['date'], y=daily_data['temperature'], name='Daily temperature'),
         secondary_y=True
     )
+
+    st.plotly_chart(fig, use_container_width=True)
 
     fig_2.update_layout(
         title='Daily Bike Trips vs Temperature in NYC (Full 2022 Data)',
