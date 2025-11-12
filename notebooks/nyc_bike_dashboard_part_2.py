@@ -212,7 +212,7 @@ if page == "Introduction":
     """)
 
 ###############################################################
-# WEATHER IMPACT ANALYSIS PAGE - IMPROVED LINE CHART
+# WEATHER IMPACT ANALYSIS 
 ###############################################################
 
 elif page == "Weather Impact Analysis":
@@ -245,34 +245,30 @@ elif page == "Weather Impact Analysis":
         correlation = display_data['daily_trips'].corr(display_data['temperature'])
         st.metric("Temperature Correlation", f"{correlation:.3f}")
     
-    # Main visualization - IMPROVED LINE CHART
+    # Main visualization 
     st.markdown("---")
     st.markdown('<div class="section-header">Daily Bike Trips vs Temperature</div>', unsafe_allow_html=True)
     
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     
-    # Bike trips (primary axis) - IMPROVED STYLING
+    # Bike trips (primary axis) 
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['daily_trips'],
             name='Daily Bike Trips',
-            line=dict(color='#1f77b4', width=3, shape='spline'),
-            marker=dict(size=4, color='#1f77b4'),
-            fill='tozeroy',
-            fillcolor='rgba(31, 119, 180, 0.1)'
+            line=dict(color='#1f77b4', width=3)
         ),
         secondary_y=False
     )
     
-    # Temperature (secondary axis) - IMPROVED STYLING
+    # Temperature (secondary axis) 
     fig.add_trace(
         go.Scatter(
             x=display_data['date'],
             y=display_data['temperature'],
             name='Temperature (°F)',
-            line=dict(color='#ff7f0e', width=3, shape='spline'),
-            marker=dict(size=4, color='#ff7f0e')
+            line=dict(color='#ff7f0e', width=3)
         ),
         secondary_y=True
     )
@@ -280,15 +276,7 @@ elif page == "Weather Impact Analysis":
     fig.update_layout(
         title="Daily Bike Trips and Temperature Over Time",
         height=500,
-        template='plotly_white',
-        hovermode='x unified',
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
+        template='plotly_white'
     )
     
     fig.update_yaxes(title_text="Daily Bike Trips", secondary_y=False)
@@ -315,7 +303,7 @@ elif page == "Weather Impact Analysis":
     """)
 
 ###############################################################
-# MOST POPULAR STATIONS PAGE - IMPROVED BAR CHART
+# MOST POPULAR STATIONS PAGE 
 ###############################################################
 
 elif page == "Most Popular Stations":
@@ -346,7 +334,7 @@ elif page == "Most Popular Stations":
         top_station = top_stations.iloc[0]
         st.metric("Top Station Volume", f"{top_station['trip_count']:,}")
     
-    # Main Visualization - IMPROVED BAR CHART
+    # Main Visualization 
     st.markdown("---")
     st.markdown('<div class="section-header">Top 20 Stations by Usage</div>', unsafe_allow_html=True)
     
@@ -356,8 +344,7 @@ elif page == "Most Popular Stations":
         marker=dict(
             color=top_stations['trip_count'],
             colorscale='Blues',
-            colorbar=dict(title="Trip Count"),
-            line=dict(color='#1f77b4', width=1)
+            colorbar=dict(title="Trip Count")
         ),
         hovertemplate='<b>%{x}</b><br>Trips: %{y:,}<extra></extra>'
     ))
@@ -367,8 +354,7 @@ elif page == "Most Popular Stations":
         xaxis_title='Start Stations',
         yaxis_title='Number of Trips',
         height=500,
-        xaxis_tickangle=-45,
-        template='plotly_white'
+        xaxis_tickangle=-45
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -392,7 +378,7 @@ elif page == "Most Popular Stations":
     """)
 
 ###############################################################
-# INTERACTIVE MAP ANALYSIS PAGE - FIXED MAP DISPLAY
+# INTERACTIVE MAP ANALYSIS PAGE
 ###############################################################
 
 elif page == "Interactive Map Analysis":
@@ -400,18 +386,19 @@ elif page == "Interactive Map Analysis":
     st.markdown('<h1 class="main-header">Spatial Analysis</h1>', unsafe_allow_html=True)
     st.markdown("### Geographic Distribution and Hotspot Identification")
     
-    # Map section - FIXED to only show map, no graphs
+    # Map section - FIXED to look in notebooks folder
     st.markdown("---")
     st.markdown('<div class="section-header">Interactive Station Map</div>', unsafe_allow_html=True)
     
-    # Only try to load and display the HTML map file
+    # Only try to load and display the HTML map file from notebooks folder
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
+        # Prioritize notebooks folder since that's where your file is
         map_paths = [
+            os.path.join(base_dir, "notebooks/nyc_bike_trips_aggregated.html"),  # First priority
             os.path.join(base_dir, "nyc_bike_trips_aggregated.html"),
             os.path.join(base_dir, "maps/nyc_bike_trips_aggregated.html"),
             os.path.join(base_dir, "../maps/nyc_bike_trips_aggregated.html"),
-            os.path.join(base_dir, "notebooks/nyc_bike_trips_aggregated.html"),
         ]
         
         html_content = None
@@ -421,7 +408,7 @@ elif page == "Interactive Map Analysis":
             if os.path.exists(map_path):
                 with open(map_path, 'r', encoding='utf-8') as f:
                     html_content = f.read()
-                st.success(f"Map loaded successfully from: {os.path.basename(os.path.dirname(map_path))}")
+                st.success(f"Map loaded successfully!")
                 map_found = True
                 break
         
@@ -432,7 +419,7 @@ elif page == "Interactive Map Analysis":
             st.info("""
             **Map Visualization**
             
-            The interactive map file is not currently available in the expected locations. 
+            The interactive map file is not currently available. 
             When available, it will display here showing geographic distribution of bike trips.
             """)
         
