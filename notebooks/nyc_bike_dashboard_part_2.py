@@ -136,72 +136,6 @@ if top_stations is not None and daily_data is not None:
     st.sidebar.metric("Peak Daily Trips", f"{daily_data['daily_trips'].max():,}")
 
 
-@st.cache_data
-def load_dashboard_data():
-    """Load and prepare dashboard data"""
-    
-    # Create sample data
-    stations = [
-        'W 21 St & 6 Ave', 'West St & Chambers St', 'Broadway & W 58 St',
-        '6 Ave & W 33 St', '1 Ave & E 68 St', 'Broadway & E 14 St',
-        'Broadway & W 25 St', 'University Pl & E 14 St', 'Broadway & E 21 St',
-        'W 31 St & 7 Ave', 'E 33 St & 1 Ave', 'Cleveland Pl & Spring St',
-        '12 Ave & W 40 St', '6 Ave & W 34 St', 'West St & Liberty St',
-        '11 Ave & W 41 St', 'Lafayette St & E 8 St', 'Central Park S & 6 Ave',
-        'E 40 St & Park Ave', '8 Ave & W 33 St'
-    ]
-    
-    trip_counts = [129018, 128456, 127890, 126543, 125678, 124321, 123456, 122890, 121234, 120567,
-                   119876, 119123, 118456, 117890, 117123, 116456, 115789, 115123, 114456, 113789]
-    
-    top_stations = pd.DataFrame({
-        'start_station_name': stations,
-        'trip_count': trip_counts
-    })
-    
-    # Create daily data with seasons
-    dates = pd.date_range('2021-01-01', '2022-12-31', freq='D')
-    
-    daily_trips = []
-    temperatures = []
-    seasons_list = []
-    
-    for date in dates:
-        month = date.month
-        
-        if month in [12, 1, 2]:
-            season = 'Winter'
-            base_temp = 35
-            base_trips = 45000
-        elif month in [3, 4, 5]:
-            season = 'Spring' 
-            base_temp = 55
-            base_trips = 75000
-        elif month in [6, 7, 8]:
-            season = 'Summer'
-            base_temp = 75
-            base_trips = 95000
-        else:
-            season = 'Fall'
-            base_temp = 60
-            base_trips = 80000
-            
-        daily_trips.append(base_trips)
-        temperatures.append(base_temp)
-        seasons_list.append(season)
-    
-    daily_data = pd.DataFrame({
-        'date': dates,
-        'daily_trips': daily_trips,
-        'temperature': temperatures,
-        'season': seasons_list
-    })
-    
-    return top_stations, daily_data
-
-# Load data
-top_stations, daily_data = load_dashboard_data()
-
 # Apply season filter if selected
 if page in ["Most Popular Stations", "Weather Impact Analysis"] and 'selected_seasons' in locals():
     if selected_seasons:
@@ -468,176 +402,19 @@ elif page == "Most Popular Stations":
     st.markdown("---")
     st.markdown('<div class="section-header">Station Analysis Insights</div>', unsafe_allow_html=True)
     
-    st.markdown("""
-    **Geographic Concentration:**
-    - Midtown Manhattan dominates top stations
-    - Tourist destinations show heavy usage
-    - Commuter hubs consistently popular
-    - Waterfront locations emerging as hotspots
-    
-    **Operational Implications:**
-    - Resource allocation should prioritize top stations
-    - Redistribution efforts needed for demand balancing
-    - Maintenance scheduling optimization required
-    - Expansion opportunities in underserved areas
-    """)
+st.markdown("""
+**Geographic Concentration:**
+- Midtown Manhattan dominates top stations
+- Tourist destinations show heavy usage
+- Commuter hubs consistently popular
+- Waterfront locations emerging as hotspots
 
-###############################################################
-# WEATHER IMPACT ANALYSIS PAGE
-###############################################################
-
-elif page == "Weather Impact Analysis":
-    st.title(" Weather Impact Analysis")
-    st.markdown("### Daily Bike Trips vs Temperature Correlation")
-    
-    if daily_data is not None:
-        # Create dual-axis line chart 
-        fig_line = make_subplots(specs=[[{"secondary_y": True}]])
-        
-        # Daily trips trace 
-        fig_line.add_trace(
-            go.Scatter(
-                x=daily_data['date'],
-                y=daily_data['daily_trips'],
-                name='Daily Bike Trips',
-                line=dict(color='#1f77b4', width=3),
-                hovertemplate='<b>Date: %{x}</b><br>Trips: %{y:,}<extra></extra>'
-            ),
-            secondary_y=False
-        )
-        
-        # Temperature trace 
-        fig_line.add_trace(
-            go.Scatter(
-                x=daily_data['date'],
-                y=daily_data['temperature'],
-                name='Average Temperature (°F)',
-                line=dict(color='#ff7f0e', width=2),
-                hovertemplate='<b>Date: %{x}</b><br>Temperature: %{y:.1f}°F<extra></extra>'
-            ),
-            secondary_y=True
-        )
-        
-        # Layout 
-        fig_line.update_layout(
-            title='Daily Bike Trips vs Temperature in NYC',
-            height=500,
-            template='plotly_white',
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
-        
-        fig_line.update_yaxes(title_text="Daily Trips", secondary_y=False)
-        fig_line.update_yaxes(title_text="Temperature (°F)", secondary_y=True)
-        
-        st.plotly_chart(fig_line, use_container_width=True)
-        
-        # Interpretation section (REQUIRED)
-        st.markdown("""
-        ###  Interpretation of Findings
-        
-        **There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of bike trips taken daily.** 
-        
-        As temperatures plunge during winter months, so does bike usage, with a noticeable decline starting in November and reaching the lowest points in January and February. 
-        Conversely, as temperatures rise in spring and summer, bike usage increases significantly, peaking during the warmest months.
-        
-        **This insight indicates that the shortage problem may be prevalent merely in the warmer months, approximately from May to October,** 
-        when demand surges due to favorable weather conditions. The seasonal pattern suggests opportunities for strategic operational scaling.
-        """)
-    else:
-        st.error("Unable to load data for weather analysis")
-
-
-    
-    st.markdown("There is an obvious correlation between the rise and drop of temperatures and their relationship with the frequency of " \
-    "bike trips taken daily. As temperatures plunge, so does bike usage. This insight indicates that the shortage problem may be prevalent " \
-    "merely in the warmer months, approximately from May to October.")
-    
-    # Insights Section
-    st.markdown("---")
-    st.markdown("### Key Insights")
-    
-    st.markdown("""
-    **Temperature Impact:**
-    - Strong positive correlation between temperature and bike usage
-    - Optimal temperature range: 65°F - 80°F for maximum ridership
-    - Significant usage drop below 45°F
-    - Summer peaks show 60-70% higher usage than winter lows
-    """)
-    
-    st.markdown("""
-    **Seasonal Patterns:**
-    - High season: May through October
-    - Shoulder seasons: April and November  
-    - Low season: December through March
-    - Weekend effect: 20% higher usage on weekends
-    """)
-
-
-###############################################################
-# RECOMMENDATIONS PAGE
-###############################################################
-
-elif page == "Recommendations":
-    
-    st.markdown('<h1 class="main-header">Strategic Recommendations</h1>', unsafe_allow_html=True)
-    st.markdown("### Data-Driven Solutions for NYC Citi Bike Operations")
-    
-    # Executive Summary
-    st.markdown("---")
-    st.markdown('<div class="section-header">Executive Summary</div>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    Our comprehensive analysis of NYC Citi Bike usage patterns reveals clear strategic opportunities 
-    for optimizing operations, addressing availability challenges, and driving sustainable growth.
-    """)
-    
-    # Key Recommendations
-    st.markdown("---")
-    st.markdown('<div class="section-header">Key Strategic Recommendations</div>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    **1. Dynamic Seasonal Scaling Strategy**
-    
-    Implement intelligent resource allocation based on seasonal demand patterns:
-    - Reduce overall fleet by 40-50% during winter months (November-April)
-    - Maintain full fleet deployment during peak months (May-October)
-    - Implement gradual transition periods in spring and fall
-    
-    **2. High-Demand Station Optimization**  
-    
-    Focus resources on consistently popular locations:
-    - Enhance maintenance schedules for the top 20 stations
-    - Implement predictive bike redistribution to high-demand areas
-    - Deploy additional operational staff during peak usage hours
-    
-    **3. Strategic Geographic Expansion**
-    
-    Target high-potential areas for station deployment:
-    - Use geographic analysis to identify underserved corridors
-    - Focus expansion along high-traffic routes
-    - Consider areas with growing residential and commercial development
-    """)
-    
-    # Stakeholder Q&A
-    st.markdown("---")
-    st.markdown('<div class="section-header">Addressing Key Stakeholder Questions</div>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    **How much would you recommend scaling bikes back between November and April?**
-    
-    Based on our temperature and usage correlation analysis, we recommend scaling back operations by 40-50% during 
-    the November-April period, with the most significant reductions in January and February when demand is lowest.
-    
-    **How could you determine how many more stations to add along the water?**
-    
-    Using our geographic analysis, we would identify high-demand corridors near waterways, 
-    analyze current station coverage gaps, and use spatial clustering to determine optimal locations.
-    
-    **What are some ideas for ensuring bikes are always stocked at the most popular stations?**
-    
-    Implement predictive redistribution algorithms, dynamic pricing incentives for returning bikes to high-demand areas, 
-    enhanced maintenance schedules at top stations, and real-time monitoring systems with automated alerts.
-    """)
+**Operational Implications:**
+- Resource allocation should prioritize top stations
+- Redistribution efforts needed for demand balancing
+- Maintenance scheduling optimization required
+- Expansion opportunities in underserved areas
+""")
 
 ###############################################################
 # FOOTER
