@@ -4,7 +4,7 @@ import numpy as np
 
 st.set_page_config(page_title="Overview", layout="wide")
 
-st.title("🏠 Executive Overview")
+st.title("Executive Overview")
 st.markdown("### Key Performance Indicators and Business Context")
 
 # Load data function (we'll improve this later)
@@ -23,7 +23,7 @@ data = load_overview_data()
 
 # Key Metrics
 st.markdown("---")
-st.subheader("📈 Key Performance Indicators")
+st.subheader(" Key Performance Indicators")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -44,7 +44,7 @@ with col4:
 
 # Business Context
 st.markdown("---")
-st.subheader("🎯 Business Challenge")
+st.subheader(" Business Challenge")
 
 st.markdown("""
 NYC Citi Bike is experiencing customer complaints about bike availability issues during peak hours and in high-demand areas. 
@@ -59,7 +59,7 @@ This comprehensive analysis examines usage patterns, seasonal impacts, and geogr
 
 # Navigation Guide
 st.markdown("---")
-st.subheader("🧭 Dashboard Navigation")
+st.subheader(" Dashboard Navigation")
 
 col1, col2 = st.columns(2)
 
