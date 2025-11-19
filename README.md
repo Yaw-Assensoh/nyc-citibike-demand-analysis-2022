@@ -1,6 +1,6 @@
-# NYC Citi Bike Demand Analysis - 2022
+# Urban Mobility Insights - NYC Citi Bike Analysis 2022
 
-A comprehensive data analysis project exploring usage patterns, trends, and operational dynamics of the NYC Citi Bike system throughout 2022. This analysis employs advanced data science methodologies to extract actionable business intelligence for strategic planning, operational optimization, and service enhancement.
+A comprehensive analysis of urban mobility patterns using NYC Citi Bike data from 2022. This project provides data-driven insights for operational efficiency, strategic planning, and service optimization in bike-sharing systems.
 
 ## 📖 Project Overview
 
